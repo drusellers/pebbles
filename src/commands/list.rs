@@ -4,18 +4,19 @@ use colored::Colorize;
 use crate::cli::ListArgs;
 use crate::config::get_db_path;
 use crate::repository::ChangeRepository;
+use crate::table::SimpleTable;
 
 pub async fn list(args: ListArgs) -> Result<()> {
     let db_path = get_db_path()
         .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
-    
+
     let repo = ChangeRepository::open(db_path).await?;
-    
+
     let status = args.status.as_deref();
     let priority = args.priority.as_deref();
-    
+
     let mut changes = repo.list(status, priority, args.all);
-    
+
     // Sort
     changes.sort_by(|a, b| {
         let cmp = match args.sort.as_str() {
@@ -24,74 +25,86 @@ pub async fn list(args: ListArgs) -> Result<()> {
             "priority" => priority_rank(&a.priority).cmp(&priority_rank(&b.priority)),
             _ => a.created_at.cmp(&b.created_at),
         };
-        
+
         if args.reverse {
             cmp.reverse()
         } else {
             cmp
         }
     });
-    
+
     if changes.is_empty() {
         println!("No changes found.");
         return Ok(());
     }
-    
-    // Print header
-    println!("{:<6} {:<12} {:<10} {:<8} {}",
-        "ID".bold(),
-        "Status".bold(),
-        "Priority".bold(),
-        "Age".bold(),
-        "Title".bold()
-    );
-    
-    // Print changes
+
+    // Calculate unique prefixes for IDs (like jj)
+    let ids: Vec<String> = changes.iter().map(|c| c.id.clone()).collect();
+    let id_prefixes = calculate_unique_prefixes(&ids);
+
+    // Create table
+    let mut table = SimpleTable::new(vec![
+        "ID".bold().to_string(),
+        "Status".bold().to_string(),
+        "Priority".bold().to_string(),
+        "Age".bold().to_string(),
+        "Title".bold().to_string(),
+    ]);
+
+    // Add rows
     for change in changes {
         let status_str = format_status(&change.status.to_string());
         let priority_str = format_priority(&change.priority.to_string());
         let age = format_age(&change.created_at);
-        
+
         // Truncate title if too long
-        let title = if change.title.len() > 50 {
-            format!("{}...", &change.title[..47])
+        let title = if change.title.len() > 60 {
+            format!("{}...", &change.title[..57])
         } else {
             change.title.clone()
         };
-        
-        println!("{:<6} {:<12} {:<10} {:<8} {}",
-            change.id.cyan(),
+
+        // Format ID with unique prefix highlighted
+        let prefix_len = id_prefixes.get(&change.id).copied().unwrap_or(change.id.len());
+        let formatted_id = format_id_with_prefix(&change.id, prefix_len);
+
+        table.add_row(vec![
+            formatted_id,
             status_str,
             priority_str,
             age,
-            title
-        );
+            title,
+        ]);
     }
-    
+
+    table.print();
+
     Ok(())
 }
 
 fn format_status(status: &str) -> String {
-    match status {
-        "draft" => status.dimmed().to_string(),
-        "approved" => status.yellow().to_string(),
-        "in_progress" => status.blue().to_string(),
-        "review" => status.magenta().to_string(),
-        "done" => status.green().to_string(),
-        "blocked" => status.red().to_string(),
-        "paused" => status.dimmed().to_string(),
-        _ => status.to_string(),
-    }
+    let styled = match status {
+        "draft" => "draft".dimmed(),
+        "approved" => "approved".yellow(),
+        "in_progress" => "in_progress".blue(),
+        "review" => "review".magenta(),
+        "done" => "done".green(),
+        "blocked" => "blocked".red(),
+        "paused" => "paused".dimmed(),
+        _ => status.normal(),
+    };
+    styled.to_string()
 }
 
 fn format_priority(priority: &str) -> String {
-    match priority {
-        "low" => priority.dimmed().to_string(),
-        "medium" => priority.to_string(),
-        "high" => priority.yellow().to_string(),
-        "critical" => priority.red().bold().to_string(),
-        _ => priority.to_string(),
-    }
+    let styled = match priority {
+        "low" => "low".dimmed(),
+        "medium" => "medium".normal(),
+        "high" => "high".yellow(),
+        "critical" => "critical".red().bold(),
+        _ => priority.normal(),
+    };
+    styled.to_string()
 }
 
 fn priority_rank(priority: &crate::models::Priority) -> u8 {
@@ -107,7 +120,7 @@ fn priority_rank(priority: &crate::models::Priority) -> u8 {
 fn format_age(datetime: &chrono::DateTime<chrono::Utc>) -> String {
     let now = chrono::Utc::now();
     let duration = now.signed_duration_since(*datetime);
-    
+
     if duration.num_days() > 0 {
         format!("{}d", duration.num_days())
     } else if duration.num_hours() > 0 {
@@ -116,5 +129,48 @@ fn format_age(datetime: &chrono::DateTime<chrono::Utc>) -> String {
         format!("{}m", duration.num_minutes())
     } else {
         "now".to_string()
+    }
+}
+
+/// Calculate the unique prefix length for each ID
+/// Returns a map of ID -> prefix length needed to be unique
+fn calculate_unique_prefixes(ids: &[String]) -> std::collections::HashMap<String, usize> {
+    let mut result = std::collections::HashMap::new();
+    
+    for id in ids {
+        // Find the minimum prefix length that makes this ID unique
+        let mut prefix_len = 1;
+        'outer: while prefix_len <= id.len() {
+            let prefix = &id[..prefix_len];
+            
+            // Check if this prefix is unique
+            let conflicts: Vec<&String> = ids.iter()
+                .filter(|other| other.starts_with(prefix) && *other != id)
+                .collect();
+            
+            if conflicts.is_empty() {
+                // This prefix is unique
+                break 'outer;
+            }
+            
+            prefix_len += 1;
+        }
+        
+        result.insert(id.clone(), prefix_len);
+    }
+    
+    result
+}
+
+/// Format an ID with its unique prefix highlighted
+fn format_id_with_prefix(id: &str, prefix_len: usize) -> String {
+    if prefix_len >= id.len() {
+        // Full ID is the unique prefix
+        id.cyan().bold().to_string()
+    } else {
+        // Split into prefix (bold) and rest (dimmed)
+        let prefix = &id[..prefix_len];
+        let rest = &id[prefix_len..];
+        format!("{}{}", prefix.cyan().bold(), rest.cyan().dimmed())
     }
 }

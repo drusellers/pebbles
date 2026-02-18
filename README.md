@@ -9,7 +9,7 @@ Pebbles is a command-line bug/task tracker designed to integrate with [opencode]
 ### From source
 
 ```bash
-git clone https://github.com/yourusername/pebbles
+git clone https://github.com/drusellers/pebbles
 cd pebbles
 cargo build --release
 # Binary is at target/release/pebbles
@@ -33,6 +33,9 @@ pebbles show <id>
 # Start working (creates workspace + launches opencode)
 pebbles work <id>
 
+# Or work without creating a workspace
+pebbles build <id>
+
 # When done, mark complete
 pebbles done <id>
 ```
@@ -51,25 +54,28 @@ Draft → Approved → InProgress → Review → Done
 
 1. **Draft**: New changes start here. Use for ideas and rough specs.
 2. **Approved**: Change is ready to be worked on. (`pebbles approve <id>`)
-3. **InProgress**: Work has started. (`pebbles work <id>`)
+3. **InProgress**: Work has started. Use either:
+   - `pebbles work <id>` - Creates an isolated workspace (recommended for large changes)
+   - `pebbles build <id>` - Works in current directory (for quick fixes)
 4. **Done**: Work is complete. (`pebbles done <id>`)
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `doctor` | Check for required dependencies (jj, git, EDITOR, opencode) |
-| `init` | Initialize a new pebbles repository |
-| `new` | Create a new change |
-| `list` | List all changes (use `--all` to include done) |
-| `show` | Show details of a change |
-| `update` | Update a change's title, body, or priority |
-| `approve` | Mark a change as approved for work |
-| `done` | Mark a change as done |
-| `work` | Start working on a change (creates workspace + opencode) |
-| `log` | Show event history for a change |
-| `cleanup` | Clean up a workspace after work is complete |
-| `completions` | Generate shell completions |
+| Command       | Description                                                 |
+|---------------|-------------------------------------------------------------|
+| `doctor`      | Check for required dependencies (jj, git, EDITOR, opencode) |
+| `init`        | Initialize a new pebbles repository                         |
+| `new`         | Create a new change                                         |
+| `list`        | List all changes (use `--all` to include done)              |
+| `show`        | Show details of a change                                    |
+| `update`      | Update a change's title, body, or priority                  |
+| `approve`     | Mark a change as approved for work                          |
+| `done`        | Mark a change as done                                       |
+| `work`        | Start working on a change (creates workspace + opencode)    |
+| `build`       | Start working on a change without creating workspace        |
+| `log`         | Show event history for a change                             |
+| `cleanup`     | Clean up a workspace after work is complete                 |
+| `completions` | Generate shell completions                                  |
 
 ## Configuration
 

@@ -1,3 +1,4 @@
+use crate::idish::IDish;
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
@@ -23,7 +24,7 @@ pub enum Commands {
     /// Show details of a change
     Show {
         /// Change ID (or current change if not specified)
-        id: Option<String>,
+        id: Option<IDish>,
     },
 
     /// Update a change
@@ -32,13 +33,13 @@ pub enum Commands {
     /// Approve a change for work
     Approve {
         /// Change ID
-        id: String,
+        id: IDish,
     },
 
     /// Start working on a change
     Work {
         /// Change ID
-        id: String,
+        id: IDish,
         /// Skip opencode permission prompts
         #[arg(long)]
         skip_permissions: bool,
@@ -47,7 +48,7 @@ pub enum Commands {
     /// Mark a change as done
     Done {
         /// Change ID (or current change if not specified)
-        id: Option<String>,
+        id: Option<IDish>,
         /// Verify all acceptance criteria are checked
         #[arg(long)]
         auto: bool,
@@ -59,13 +60,22 @@ pub enum Commands {
     /// Clean up a workspace
     Cleanup {
         /// Change ID (or current change if not specified)
-        id: Option<String>,
+        id: Option<IDish>,
+    },
+
+    /// Build a change (start work without workspace)
+    Build {
+        /// Change ID
+        id: IDish,
+        /// Skip opencode permission prompts
+        #[arg(long)]
+        skip_permissions: bool,
     },
 
     /// Show event history for a change
     Log {
         /// Change ID (or current change if not specified)
-        id: Option<String>,
+        id: Option<IDish>,
     },
 
     /// Show current change (when in workspace)
@@ -74,7 +84,7 @@ pub enum Commands {
     /// Edit a change in your editor
     Edit {
         /// Change ID (or current change if not specified)
-        id: Option<String>,
+        id: Option<IDish>,
     },
 
     /// Generate shell completions
@@ -85,6 +95,16 @@ pub enum Commands {
 
     /// Check for required dependencies
     Doctor,
+
+    /// Delete a change
+    #[command(visible_alias = "rm", visible_alias = "del")]
+    Delete {
+        /// Change ID
+        id: IDish,
+        /// Force deletion without confirmation
+        #[arg(short, long)]
+        force: bool,
+    },
 }
 
 #[derive(Parser)]
@@ -124,7 +144,7 @@ pub struct ListArgs {
     pub all: bool,
 
     /// Sort by field
-    #[arg(short, long, default_value = "created")]
+    #[arg(short = 'S', long, default_value = "created")]
     pub sort: String,
 
     /// Reverse sort order
@@ -135,7 +155,7 @@ pub struct ListArgs {
 #[derive(Parser)]
 pub struct UpdateArgs {
     /// Change ID (or current change if not specified)
-    pub id: Option<String>,
+    pub id: Option<IDish>,
 
     /// New title
     #[arg(short, long)]

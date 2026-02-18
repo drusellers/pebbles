@@ -5,8 +5,10 @@ mod cli;
 mod commands;
 mod config;
 mod db;
+mod idish;
 mod models;
 mod repository;
+mod table;
 mod vcs;
 
 use cli::{Cli, Commands};
@@ -27,10 +29,12 @@ async fn main() -> Result<()> {
         }
         Commands::Done { id, auto, force } => commands::done(id, auto, force).await,
         Commands::Cleanup { id } => commands::cleanup(id).await,
+        Commands::Build { id, skip_permissions } => commands::build(id, skip_permissions).await,
         Commands::Log { id } => commands::log(id).await,
         Commands::Current => commands::current().await,
         Commands::Edit { id } => commands::edit(id).await,
         Commands::Completions { shell } => commands::completions(shell),
         Commands::Doctor => commands::doctor().await,
+        Commands::Delete { id, force } => commands::delete(id, force).await,
     }
 }

@@ -1,5 +1,18 @@
 {
   "changes": {
+    "2p4t": {
+      "id": "2p4t",
+      "title": "abc",
+      "body": "\n## Implementation Notes\n\nImplemented unique prefix highlighting for change IDs in the 'pebbles show' command.\n\n### Changes Made:\n1. Added 'unique_prefix_len()' function in src/commands/mod.rs:74 to calculate the minimum prefix length needed to uniquely identify a change ID among all others\n2. Added 'format_id_with_unique_prefix()' function in src/commands/mod.rs:96 to format the ID with the unique prefix in bold cyan and the rest dimmed\n3. Updated 'show' command in src/commands/show.rs:20-26 to use the new formatting\n\n### Technical Details:\n- The unique prefix is calculated by comparing the target ID against all other change IDs\n- The shortest prefix that makes the ID unique is highlighted\n- Format: unique prefix in bold cyan, remaining characters dimmed\n- Example: If change '2p4t' is the only one starting with '2', it will display as **2**p4t (with '2' bold and 'p4t' dimmed)\n\n## Log\n- 2026-02-18: Implemented unique prefix highlighting for change IDs\n",
+      "status": "done",
+      "priority": "medium",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:10.592887Z",
+      "updated_at": "2026-02-18T21:14:31.428830Z"
+    },
     "fq24": {
       "id": "fq24",
       "title": "abcd",
@@ -12,19 +25,6 @@
       "tags": [],
       "created_at": "2026-02-18T21:06:18.410303Z",
       "updated_at": "2026-02-18T21:06:18.410303Z"
-    },
-    "2p4t": {
-      "id": "2p4t",
-      "title": "abc",
-      "body": "In the version control management tool Jujitsu, there is this idea of a prefix that can be used for highlighting. So no matter the issue that's shown, such as this issue is 2P4T, I want to be able to highlight the unique part of the issue number so that I don't have to type all four letters.",
-      "status": "draft",
-      "priority": "medium",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T21:06:10.592887Z",
-      "updated_at": "2026-02-18T21:08:06.207404Z"
     }
   },
   "events": [
@@ -59,6 +59,88 @@
         "field": "body"
       },
       "created_at": "2026-02-18T21:08:06.207426Z"
+    },
+    {
+      "id": "309653fc-360f-4a60-bebd-93563b736c94",
+      "change_id": "2p4t",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-18T21:11:36.072838Z"
+    },
+    {
+      "id": "e8a11eac-60ed-40f3-84eb-b963555fc381",
+      "change_id": "2p4t",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-18T21:11:38.762409Z"
+    },
+    {
+      "id": "63b986f6-d9ca-484c-819a-62834e76a284",
+      "change_id": "2p4t",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-18T21:13:58.211444Z"
+    },
+    {
+      "id": "a062095d-be2f-41e0-8403-fddb585122be",
+      "change_id": "2p4t",
+      "event_type": "status_changed",
+      "data": {
+        "from": "in_progress",
+        "to": "done"
+      },
+      "created_at": "2026-02-18T21:14:31.428842Z"
+    },
+    {
+      "id": "aee3bff8-9ff1-477a-9af1-5c75835da68a",
+      "change_id": "1wwe",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "Fix critical authentication bug with OAuth token expiration"
+      },
+      "created_at": "2026-02-18T21:16:39.606688Z"
+    },
+    {
+      "id": "2f3d9644-b573-4587-8cf5-49081262a74b",
+      "change_id": "c6te",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "low",
+        "title": "Update user documentation for API v2"
+      },
+      "created_at": "2026-02-18T21:16:44.912657Z"
+    },
+    {
+      "id": "57a9f06a-4ead-48ab-b1cb-5784e54c32e8",
+      "change_id": "w3dk",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "high",
+        "title": "Add dark mode support to dashboard"
+      },
+      "created_at": "2026-02-18T21:16:48.744593Z"
+    },
+    {
+      "id": "e210a1f5-696d-4965-9d01-b253a930c107",
+      "change_id": "w3dk",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-18T21:16:52.507294Z"
     }
   ]
 }
