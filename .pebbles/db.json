@@ -1,0 +1,64 @@
+{
+  "changes": {
+    "fq24": {
+      "id": "fq24",
+      "title": "abcd",
+      "body": "here is the issue",
+      "status": "draft",
+      "priority": "medium",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:18.410303Z",
+      "updated_at": "2026-02-18T21:06:18.410303Z"
+    },
+    "2p4t": {
+      "id": "2p4t",
+      "title": "abc",
+      "body": "In the version control management tool Jujitsu, there is this idea of a prefix that can be used for highlighting. So no matter the issue that's shown, such as this issue is 2P4T, I want to be able to highlight the unique part of the issue number so that I don't have to type all four letters.",
+      "status": "draft",
+      "priority": "medium",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:10.592887Z",
+      "updated_at": "2026-02-18T21:08:06.207404Z"
+    }
+  },
+  "events": [
+    {
+      "id": "b993b3b4-c9ca-4732-aa54-5d92ebb779fd",
+      "change_id": "2p4t",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "abc"
+      },
+      "created_at": "2026-02-18T21:06:10.592907Z"
+    },
+    {
+      "id": "17d4284d-867d-4fdb-b433-0424134fd486",
+      "change_id": "fq24",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "abcd"
+      },
+      "created_at": "2026-02-18T21:06:24.559340Z"
+    },
+    {
+      "id": "f98b3362-bb97-49d6-b740-71492aecab97",
+      "change_id": "2p4t",
+      "event_type": "updated",
+      "data": {
+        "editor": "code --wait",
+        "field": "body"
+      },
+      "created_at": "2026-02-18T21:08:06.207426Z"
+    }
+  ]
+}
