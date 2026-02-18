@@ -83,11 +83,7 @@ impl Vcs for Git {
         let current_dir = std::env::current_dir().ok()?;
         let dir_name = current_dir.file_name()?.to_str()?;
 
-        if dir_name.starts_with("ws-") {
-            Some(dir_name[3..].to_string())
-        } else {
-            None
-        }
+        dir_name.strip_prefix("ws-").map(|s| s.to_string())
     }
 
     fn commit(&self, message: &str) -> Result<()> {

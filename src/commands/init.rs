@@ -59,7 +59,7 @@ fn find_repo_root() -> Option<PathBuf> {
     None
 }
 
-async fn create_opencode_commands(repo_root: &PathBuf) -> Result<()> {
+async fn create_opencode_commands(repo_root: &std::path::Path) -> Result<()> {
     let opencode_dir = repo_root.join(".opencode").join("commands");
 
     tokio::fs::create_dir_all(&opencode_dir)

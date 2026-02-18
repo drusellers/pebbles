@@ -14,21 +14,12 @@ pub struct Config {
     pub editor: EditorConfig,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct WorkConfig {
     #[serde(default)]
     pub skip_permissions: bool,
     #[serde(default)]
     pub auto_implement: bool,
-}
-
-impl Default for WorkConfig {
-    fn default() -> Self {
-        Self {
-            skip_permissions: false,
-            auto_implement: false,
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -65,15 +56,9 @@ impl Default for OutputConfig {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EditorConfig {
     pub command: Option<String>,
-}
-
-impl Default for EditorConfig {
-    fn default() -> Self {
-        Self { command: None }
-    }
 }
 
 impl Config {

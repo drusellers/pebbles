@@ -41,10 +41,8 @@ pub async fn new(args: NewArgs) -> Result<()> {
     // Handle body
     let body = if args.edit {
         edit_in_editor("", &get_config_path().unwrap()).await?
-    } else if let Some(body) = args.body {
-        body
     } else {
-        String::new()
+        args.body.unwrap_or_default()
     };
     change.body = body;
     

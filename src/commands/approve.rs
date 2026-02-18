@@ -25,7 +25,7 @@ pub async fn approve(id: IDish) -> Result<()> {
         anyhow::bail!(
             "Cannot approve change '{}': status is '{}' (must be 'draft')",
             full_id,
-            change.status.to_string()
+            change.status
         );
     }
 

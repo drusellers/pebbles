@@ -42,10 +42,10 @@ fn resolve_id(id: Option<crate::idish::IDish>) -> Result<String> {
         Some(id) => Ok(id.as_str().to_string()),
         None => {
             // Try to detect current workspace
-            if let Some(vcs) = crate::vcs::detect_vcs() {
-                if let Some(current_id) = vcs.current_workspace_id() {
-                    return Ok(current_id);
-                }
+            if let Some(vcs) = crate::vcs::detect_vcs()
+                && let Some(current_id) = vcs.current_workspace_id()
+            {
+                return Ok(current_id);
             }
             
             // Build a helpful error message
@@ -94,13 +94,7 @@ fn print_info(msg: &str) {
     println!("{} {}", "→".blue(), msg);
 }
 
-fn print_warning(msg: &str) {
-    println!("{} {}", "!".yellow(), msg);
-}
 
-fn print_error(msg: &str) {
-    eprintln!("{} {}", "✗".red(), msg);
-}
 
 /// Calculate the shortest unique prefix length for an ID among all other IDs.
 /// Returns the minimum number of characters needed to uniquely identify this ID.

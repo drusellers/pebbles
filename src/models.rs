@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Change {
@@ -34,11 +35,13 @@ impl Change {
         }
     }
 
+    #[allow(dead_code)]
     pub fn with_body(mut self, body: String) -> Self {
         self.body = body;
         self
     }
 
+    #[allow(dead_code)]
     pub fn with_parent(mut self, parent: String) -> Self {
         self.parent = Some(parent);
         self
@@ -77,6 +80,20 @@ pub enum Status {
     Paused,
 }
 
+impl fmt::Display for Status {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Status::Draft => write!(f, "draft"),
+            Status::Approved => write!(f, "approved"),
+            Status::InProgress => write!(f, "in_progress"),
+            Status::Review => write!(f, "review"),
+            Status::Done => write!(f, "done"),
+            Status::Blocked => write!(f, "blocked"),
+            Status::Paused => write!(f, "paused"),
+        }
+    }
+}
+
 impl Status {
     pub fn from_string(s: &str) -> Option<Self> {
         match s.to_lowercase().as_str() {
@@ -90,18 +107,6 @@ impl Status {
             _ => None,
         }
     }
-
-    pub fn to_string(&self) -> String {
-        match self {
-            Status::Draft => "draft".to_string(),
-            Status::Approved => "approved".to_string(),
-            Status::InProgress => "in_progress".to_string(),
-            Status::Review => "review".to_string(),
-            Status::Done => "done".to_string(),
-            Status::Blocked => "blocked".to_string(),
-            Status::Paused => "paused".to_string(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -113,23 +118,13 @@ pub enum Priority {
     Critical,
 }
 
-impl Priority {
-    pub fn from_string(s: &str) -> Option<Self> {
-        match s.to_lowercase().as_str() {
-            "low" => Some(Priority::Low),
-            "medium" => Some(Priority::Medium),
-            "high" => Some(Priority::High),
-            "critical" => Some(Priority::Critical),
-            _ => None,
-        }
-    }
-
-    pub fn to_string(&self) -> String {
+impl fmt::Display for Priority {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Priority::Low => "low".to_string(),
-            Priority::Medium => "medium".to_string(),
-            Priority::High => "high".to_string(),
-            Priority::Critical => "critical".to_string(),
+            Priority::Low => write!(f, "low"),
+            Priority::Medium => write!(f, "medium"),
+            Priority::High => write!(f, "high"),
+            Priority::Critical => write!(f, "critical"),
         }
     }
 }

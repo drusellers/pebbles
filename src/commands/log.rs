@@ -44,11 +44,11 @@ pub async fn log(id: Option<IDish>) -> Result<()> {
         println!("\n  {} {}", timestamp.dimmed(), event_type);
 
         // Print event data if present
-        if event.data != serde_json::Value::Null {
-            if let Some(obj) = event.data.as_object() {
-                for (key, value) in obj {
-                    println!("    {}: {}", key, value);
-                }
+        if event.data != serde_json::Value::Null
+            && let Some(obj) = event.data.as_object()
+        {
+            for (key, value) in obj {
+                println!("    {}: {}", key, value);
             }
         }
     }

@@ -48,6 +48,7 @@ impl ChangeRepository {
         Ok(self.db.get_change(&id).unwrap())
     }
 
+    #[allow(dead_code)]
     pub async fn update(&mut self, change: Change) -> Result<&Change> {
         let id = change.id.clone();
         self.db.update_change(change)?;

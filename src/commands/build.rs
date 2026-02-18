@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use std::process::Command;
 
-use crate::commands::{print_info, print_success};
+use crate::commands::print_info;
 use crate::config::{get_config_path, get_db_path, Config};
 use crate::db::Db;
 use crate::idish::IDish;

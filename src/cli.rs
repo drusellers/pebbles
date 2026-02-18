@@ -1,5 +1,6 @@
 use crate::idish::IDish;
 use clap::{Parser, Subcommand, ValueEnum};
+use std::fmt;
 
 #[derive(Parser)]
 #[command(name = "pebbles")]
@@ -186,13 +187,13 @@ pub enum PriorityArg {
     Critical,
 }
 
-impl PriorityArg {
-    pub fn to_string(&self) -> String {
+impl fmt::Display for PriorityArg {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            PriorityArg::Low => "low".to_string(),
-            PriorityArg::Medium => "medium".to_string(),
-            PriorityArg::High => "high".to_string(),
-            PriorityArg::Critical => "critical".to_string(),
+            PriorityArg::Low => write!(f, "low"),
+            PriorityArg::Medium => write!(f, "medium"),
+            PriorityArg::High => write!(f, "high"),
+            PriorityArg::Critical => write!(f, "critical"),
         }
     }
 }

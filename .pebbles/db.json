@@ -16,15 +16,15 @@
     "fq24": {
       "id": "fq24",
       "title": "abcd",
-      "body": "here is the issue",
-      "status": "draft",
+      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
+      "status": "done",
       "priority": "medium",
       "parent": null,
       "children": [],
       "dependencies": [],
       "tags": [],
       "created_at": "2026-02-18T21:06:18.410303Z",
-      "updated_at": "2026-02-18T21:06:18.410303Z"
+      "updated_at": "2026-02-18T22:28:08.567409Z"
     }
   },
   "events": [
@@ -141,6 +141,55 @@
         "to": "approved"
       },
       "created_at": "2026-02-18T21:16:52.507294Z"
+    },
+    {
+      "id": "282f9dd1-c987-41c9-9467-84a716084264",
+      "change_id": "fq24",
+      "event_type": "updated",
+      "data": {
+        "editor": "code --wait",
+        "field": "body"
+      },
+      "created_at": "2026-02-18T22:19:58.885740Z"
+    },
+    {
+      "id": "07e54d33-d9ae-4dec-b01d-25fdeb5b98ae",
+      "change_id": "fq24",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-18T22:20:19.702343Z"
+    },
+    {
+      "id": "8d2dc9fe-6290-4809-8d58-5d07553d2c7b",
+      "change_id": "fq24",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-18T22:21:10.548328Z"
+    },
+    {
+      "id": "8a4e08d2-19ed-449b-b607-04f8cf3f92da",
+      "change_id": "fq24",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-18T22:26:56.167014Z"
+    },
+    {
+      "id": "4946ed08-c0a6-4cda-aef7-e3426830adc8",
+      "change_id": "fq24",
+      "event_type": "status_changed",
+      "data": {
+        "from": "in_progress",
+        "to": "done"
+      },
+      "created_at": "2026-02-18T22:28:08.567444Z"
     }
   ]
 }

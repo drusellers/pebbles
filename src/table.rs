@@ -1,5 +1,3 @@
-use colored::Colorize;
-
 pub struct SimpleTable {
     headers: Vec<String>,
     rows: Vec<Vec<String>>,

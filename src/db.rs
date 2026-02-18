@@ -69,6 +69,7 @@ impl Db {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn update_change(&mut self, change: Change) -> Result<()> {
         if !self.data.changes.contains_key(&change.id) {
             anyhow::bail!("Change with ID '{}' not found", change.id);
