@@ -7,7 +7,7 @@ use crate::vcs::find_repo_root;
 
 pub async fn init() -> Result<()> {
     // Check if already initialized
-    if find_pebbles_root().is_some() {
+    if find_pebbles_root().is_ok() {
         anyhow::bail!("Pebbles is already initialized in this repository");
     }
 

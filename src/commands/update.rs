@@ -9,14 +9,13 @@ use crate::repository::ChangeRepository;
 use anyhow::{Context, Result};
 
 pub async fn update(args: UpdateArgs) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     // Handle ID resolution first
     let full_id = if let Some(id) = args.id {
         // Resolve ID to full ID using the db directly
         let db = Db::open(&db_path).await?;
-        id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?
+        id.resolve(&db)?
     } else {
         // Use workspace detection
         resolve_id(None).await?
@@ -71,7 +70,7 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
     if args.edit {
         let body = edit_in_editor(
             &repo.find_by_id(&full_id).unwrap().body,
-            &crate::config::get_config_path().unwrap()
+            &crate::config::get_config_path()?
         ).await?;
 
         let change = repo.find_by_id_mut(&full_id)

@@ -20,10 +20,10 @@ fn print_not_in_workspace() {
     
     eprintln!("{} Not in a pebbles workspace.", "!".yellow());
     
-    if crate::config::get_db_path().is_some() {
+    if crate::config::get_db_path().is_ok() {
         eprintln!("\nYou are in a pebbles-enabled repository.");
         
-        if let Some(root) = crate::config::find_pebbles_root() {
+        if let Ok(root) = crate::config::find_pebbles_root() {
             let workspaces: Vec<String> = std::fs::read_dir(&root)
                 .ok()
                 .into_iter()

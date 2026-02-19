@@ -2,16 +2,15 @@ use crate::commands::print_success;
 use crate::config::get_db_path;
 use crate::db::Db;
 use crate::idish::IDish;
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 pub async fn delete(id: IDish, force: bool) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     let mut db = Db::open(&db_path).await?;
 
     // Resolve ID to full ID
-    let full_id = id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
+    let full_id = id.resolve(&db)?;
 
     // Check if change exists
     let change = db.get_change(&full_id)

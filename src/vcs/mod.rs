@@ -1,10 +1,20 @@
 use crate::id::Id;
 use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 pub mod git;
 pub mod jujutsu;
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum VcsPreference {
+    #[default]
+    Auto,
+    Git,
+    Jujutsu,
+}
 
 pub trait Vcs: Send + Sync {
     fn name(&self) -> &'static str;
@@ -20,22 +30,23 @@ pub trait Vcs: Send + Sync {
 }
 
 pub fn detect_vcs() -> Option<Box<dyn Vcs>> {
-    let git = git::Git;
-    if git.detect() {
-        return Some(Box::new(git));
-    }
-
+    // Jujutsu wins over Git
     let jj = jujutsu::Jujutsu;
     if jj.detect() {
         return Some(Box::new(jj));
     }
 
+    let git = git::Git;
+    if git.detect() {
+        return Some(Box::new(git));
+    }
+
     None
 }
 
-pub fn detect_vcs_with_preference(prefer: &str) -> Option<Box<dyn Vcs>> {
+pub fn detect_vcs_with_preference(prefer: VcsPreference) -> Option<Box<dyn Vcs>> {
     match prefer {
-        "git" => {
+        VcsPreference::Git => {
             let git = git::Git;
             if git.detect() {
                 Some(Box::new(git))
@@ -43,7 +54,7 @@ pub fn detect_vcs_with_preference(prefer: &str) -> Option<Box<dyn Vcs>> {
                 None
             }
         }
-        "jujutsu" | "jj" => {
+        VcsPreference::Jujutsu => {
             let jj = jujutsu::Jujutsu;
             if jj.detect() {
                 Some(Box::new(jj))
@@ -51,7 +62,7 @@ pub fn detect_vcs_with_preference(prefer: &str) -> Option<Box<dyn Vcs>> {
                 None
             }
         }
-        _ => detect_vcs(),
+        VcsPreference::Auto => detect_vcs(),
     }
 }
 

@@ -4,15 +4,14 @@ use crate::db::Db;
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 pub async fn approve(id: IDish) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     // Resolve ID to full ID first
     let db = Db::open(&db_path).await?;
-    let full_id = id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
+    let full_id = id.resolve(&db)?;
 
     let mut repo = ChangeRepository::open(db_path).await?;
 

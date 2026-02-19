@@ -7,14 +7,13 @@ use crate::repository::ChangeRepository;
 use anyhow::{Context, Result};
 
 pub async fn edit(id: Option<IDish>) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     // Handle ID resolution first
     let full_id = if let Some(id) = id {
         // Resolve ID to full ID using the db directly
         let db = Db::open(&db_path).await?;
-        id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?
+        id.resolve(&db)?
     } else {
         // Use workspace detection
         resolve_id(None).await?
@@ -25,7 +24,7 @@ pub async fn edit(id: Option<IDish>) -> Result<()> {
     let change = repo.find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
-    let config_path = get_config_path().unwrap();
+    let config_path = get_config_path()?;
     let config = Config::load(&config_path).await?;
     let editor = config.get_editor();
 

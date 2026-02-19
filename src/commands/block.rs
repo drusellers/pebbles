@@ -5,16 +5,15 @@ use crate::idish::IDish;
 use crate::models::Event;
 use crate::models::EventType;
 use crate::repository::ChangeRepository;
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 pub async fn block(change_id: IDish, dependency_id: IDish) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     // Resolve both IDs
     let db = Db::open(&db_path).await?;
-    let full_change_id = change_id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
-    let full_dependency_id = dependency_id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
+    let full_change_id = change_id.resolve(&db)?;
+    let full_dependency_id = dependency_id.resolve(&db)?;
 
     // Check that we're not trying to block ourselves
     if full_change_id == full_dependency_id {
@@ -70,13 +69,12 @@ pub async fn block(change_id: IDish, dependency_id: IDish) -> Result<()> {
 }
 
 pub async fn unblock(change_id: IDish, dependency_id: IDish) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     // Resolve both IDs
     let db = Db::open(&db_path).await?;
-    let full_change_id = change_id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
-    let full_dependency_id = dependency_id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
+    let full_change_id = change_id.resolve(&db)?;
+    let full_dependency_id = dependency_id.resolve(&db)?;
 
     let mut repo = ChangeRepository::open(db_path).await?;
 

@@ -8,12 +8,11 @@ use colored::Colorize;
 use std::process::Command;
 
 pub async fn plan(id: Option<IDish>, wait: bool) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     let db = crate::db::Db::open(&db_path).await?;
     let full_id = match id {
-        Some(id) => id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?,
+        Some(id) => id.resolve(&db)?,
         None => resolve_id(None).await?,
     };
 
@@ -23,10 +22,10 @@ pub async fn plan(id: Option<IDish>, wait: bool) -> Result<()> {
         .find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
-    let config_path = get_config_path().unwrap();
+    let config_path = get_config_path()?;
     let config = Config::load(&config_path).await?;
 
-    let vcs = detect_vcs_with_preference(&config.vcs.prefer)
+    let vcs = detect_vcs_with_preference(config.vcs.prefer)
         .context("No version control system detected (git or jujutsu)")?;
 
     // Display the change

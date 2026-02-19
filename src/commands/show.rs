@@ -3,18 +3,17 @@ use crate::config::get_db_path;
 use crate::db::Db;
 use crate::idish::IDish;
 use crate::repository::ChangeRepository;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use colored::Colorize;
 
 pub async fn show(id: Option<IDish>) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     // Handle ID resolution first
     let full_id = if let Some(id) = id {
         // Resolve ID to full ID using the db directly
         let db = Db::open(&db_path).await?;
-        id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?
+        id.resolve(&db)?
     } else {
         // Use workspace detection
         resolve_id(None).await?

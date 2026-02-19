@@ -48,10 +48,9 @@ pub async fn resolve_id(id: Option<IDish>) -> Result<Id> {
     
     match id {
         Some(idish) => {
-            let db_path = crate::config::get_db_path()
-                .ok_or_else(|| anyhow::anyhow!("Not in a pebbles repository. Run 'pebbles init' first."))?;
+            let db_path = crate::config::get_db_path()?;
             let db = Db::open(&db_path).await?;
-            idish.resolve(&db).map_err(|e| anyhow::anyhow!(e))
+            idish.resolve(&db)
         }
         None => {
             // Try to detect current workspace
@@ -65,11 +64,11 @@ pub async fn resolve_id(id: Option<IDish>) -> Result<Id> {
             let mut msg = String::from("No change ID provided and not in a workspace.");
             
             // Check if we're in a pebbles-enabled repository
-            if let Some(_db_path) = crate::config::get_db_path() {
+            if crate::config::get_db_path().is_ok() {
                 msg.push_str("\n\nYou are in a pebbles-enabled repository.");
                 
                 // List available workspaces (ws-* directories)
-                if let Some(root) = crate::config::find_pebbles_root() {
+                if let Ok(root) = crate::config::find_pebbles_root() {
                     let workspaces: Vec<String> = std::fs::read_dir(&root)
                         .ok()
                         .into_iter()

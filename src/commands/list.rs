@@ -4,13 +4,12 @@ use crate::id::Id;
 use crate::models::{Change, Status};
 use crate::repository::ChangeRepository;
 use crate::table::SimpleTable;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use colored::Colorize;
 use std::collections::{HashMap, HashSet};
 
 pub async fn list(args: ListArgs) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     let repo = ChangeRepository::open(db_path).await?;
 

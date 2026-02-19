@@ -10,8 +10,7 @@ use rand::{thread_rng, Rng};
 const ALPHANUMERIC: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
 
 pub async fn new(args: NewArgs) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
     
     let mut repo = ChangeRepository::open(db_path).await?;
     
@@ -42,7 +41,7 @@ pub async fn new(args: NewArgs) -> Result<()> {
     
     // Handle body
     let body = if args.edit {
-        edit_in_editor("", &get_config_path().unwrap()).await?
+        edit_in_editor("", &get_config_path()?).await?
     } else {
         args.body.unwrap_or_default()
     };

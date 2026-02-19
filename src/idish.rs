@@ -14,7 +14,7 @@ impl IDish {
     /// - Case-insensitive exact match wins
     /// - Otherwise finds unique prefix match (case-insensitive)
     /// - Returns error if ambiguous or not found
-    pub fn resolve(&self, db: &Db) -> Result<Id, IDishError> {
+    pub fn resolve(&self, db: &Db) -> anyhow::Result<Id> {
         let input = self.0.to_lowercase();
 
         // 1. Check for exact match (case-insensitive)
@@ -30,14 +30,14 @@ impl IDish {
             .collect();
 
         match candidates.len() {
-            0 => Err(IDishError::NotFound {
+            0 => Err(anyhow::anyhow!(IDishError::NotFound {
                 prefix: self.0.clone(),
-            }),
+            })),
             1 => Ok(candidates[0].clone()),
-            _ => Err(IDishError::Ambiguous {
+            _ => Err(anyhow::anyhow!(IDishError::Ambiguous {
                 prefix: self.0.clone(),
                 candidates: candidates.iter().map(|id| id.to_string()).collect(),
-            }),
+            })),
         }
     }
 }

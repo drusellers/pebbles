@@ -56,7 +56,23 @@ Use `pebbles update` to save all the planning work:
 - Add acceptance criteria (if missing)
 - Add context from codebase scan
 - Add the implementation checklist
+- Add a "## Log" section with initial planning entry
+- Add a "## Changelog Type" section (placeholder for implement phase)
 - Add any notes or questions for clarification
+- Add a log entry: `- YYYY-MM-DD: Planning completed - acceptance criteria and implementation checklist defined`
+
+### 6. Document Relationships (Optional)
+
+If this change relates to other commands or workflows, ask the user:
+
+"Should we add a reference to the /implement command for the next phase, or document any other workflow relationships?"
+
+If yes, add a note like:
+```markdown
+## Workflow Notes
+- Next step: Run `/implement` to begin implementation
+- Related commands: [list any related commands]
+```
 
 ## Example Output
 
@@ -86,6 +102,12 @@ Brief description of what needs to be done
 ## Questions
 - Should the button support both light and dark themes?
 - What size variants are needed?
+
+## Log
+- 2026-02-19: Planning completed - acceptance criteria and implementation checklist defined
+
+## Changelog Type
+To be determined during implementation (feature/fix/change/deprecated/removed/security/internal)
 ```
 
 ## Notes

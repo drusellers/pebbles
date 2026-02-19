@@ -1,3 +1,4 @@
+use crate::vcs::VcsPreference;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -22,22 +23,10 @@ pub struct WorkConfig {
     pub auto_implement: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct VcsConfig {
-    #[serde(default = "default_vcs_prefer")]
-    pub prefer: String,
-}
-
-fn default_vcs_prefer() -> String {
-    "auto".to_string()
-}
-
-impl Default for VcsConfig {
-    fn default() -> Self {
-        Self {
-            prefer: "auto".to_string(),
-        }
-    }
+    #[serde(default)]
+    pub prefer: VcsPreference,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -117,13 +106,14 @@ impl Config {
     }
 }
 
-pub fn find_pebbles_root() -> Option<PathBuf> {
-    let mut current = std::env::current_dir().ok()?;
+pub fn find_pebbles_root() -> Result<PathBuf> {
+    let mut current = std::env::current_dir()
+        .context("Failed to get current directory")?;
     
     loop {
         let pebbles_dir = current.join(".pebbles");
         if pebbles_dir.exists() {
-            return Some(current);
+            return Ok(current);
         }
         
         if !current.pop() {
@@ -131,17 +121,17 @@ pub fn find_pebbles_root() -> Option<PathBuf> {
         }
     }
     
-    None
+    Err(anyhow::anyhow!("Not in a pebbles repository. Run 'pebbles init' first."))
 }
 
-pub fn get_pebbles_dir() -> Option<PathBuf> {
+pub fn get_pebbles_dir() -> Result<PathBuf> {
     find_pebbles_root().map(|root| root.join(".pebbles"))
 }
 
-pub fn get_db_path() -> Option<PathBuf> {
+pub fn get_db_path() -> Result<PathBuf> {
     get_pebbles_dir().map(|dir| dir.join("db.json"))
 }
 
-pub fn get_config_path() -> Option<PathBuf> {
+pub fn get_config_path() -> Result<PathBuf> {
     get_pebbles_dir().map(|dir| dir.join("config.toml"))
 }

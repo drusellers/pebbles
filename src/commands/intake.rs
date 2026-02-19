@@ -9,8 +9,7 @@ use std::process::Command;
 
 pub async fn intake(file: Option<PathBuf>) -> Result<()> {
     // Validate pebbles repository is initialized
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     // Read content from file or stdin
     let content = match file {
@@ -35,10 +34,10 @@ pub async fn intake(file: Option<PathBuf>) -> Result<()> {
         anyhow::bail!("Input is empty. Please provide text to process.");
     }
 
-    let config_path = get_config_path().unwrap();
+    let config_path = get_config_path()?;
     let config = Config::load(&config_path).await?;
 
-    let vcs = detect_vcs_with_preference(&config.vcs.prefer)
+    let vcs = detect_vcs_with_preference(config.vcs.prefer)
         .context("No version control system detected (git or jujutsu)")?;
 
     // Create a temporary file with the content

@@ -10,11 +10,10 @@ use std::path::PathBuf;
 use std::process::Command;
 
 pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_permissions: bool) -> Result<()> {
-    let db_path = get_db_path()
-        .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
+    let db_path = get_db_path()?;
 
     let db = Db::open(&db_path).await?;
-    let full_id = id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
+    let full_id = id.resolve(&db)?;
 
     let mut repo = ChangeRepository::open(db_path).await?;
 
@@ -35,10 +34,10 @@ pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_
         _ => {}
     }
 
-    let config_path = get_config_path().unwrap();
+    let config_path = get_config_path()?;
     let config = Config::load(&config_path).await?;
 
-    let vcs = detect_vcs_with_preference(&config.vcs.prefer)
+    let vcs = detect_vcs_with_preference(config.vcs.prefer)
         .context("No version control system detected (git or jujutsu)")?;
 
     print_info(&format!("Using {} for version control", vcs.name()));
