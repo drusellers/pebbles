@@ -160,6 +160,10 @@ pub struct ListArgs {
     /// Reverse sort order
     #[arg(short, long)]
     pub reverse: bool,
+
+    /// Display changes in a flat list instead of tree view
+    #[arg(long)]
+    pub flat: bool,
 }
 
 #[derive(Parser)]
@@ -190,6 +194,10 @@ pub struct UpdateArgs {
     /// Open editor to modify body
     #[arg(short, long)]
     pub edit: bool,
+
+    /// New parent change ID (use empty string to remove parent)
+    #[arg(long)]
+    pub parent: Option<String>,
 }
 
 #[derive(Clone, ValueEnum)]

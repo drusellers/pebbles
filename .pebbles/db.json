@@ -1,18 +1,5 @@
 {
   "changes": {
-    "fq24": {
-      "id": "fq24",
-      "title": "abcd",
-      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
-      "status": "done",
-      "priority": "medium",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T21:06:18.410303Z",
-      "updated_at": "2026-02-18T22:28:08.567409Z"
-    },
     "6vt4": {
       "id": "6vt4",
       "title": "add ls alias to list",
@@ -26,6 +13,32 @@
       "created_at": "2026-02-18T22:40:24.940070Z",
       "updated_at": "2026-02-18T22:49:04.754953Z"
     },
+    "hag1": {
+      "id": "hag1",
+      "title": "id's should use a strong type ID, rather than String and &str",
+      "body": "Update the AGENTS.md file with this concept too.\n\nWhenever possible we want to create strong types for ID's in our system. So a vector of child ids should be a vector of ID (Vec<ID>)\n\n",
+      "status": "draft",
+      "priority": "medium",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-19T14:15:35.689496Z",
+      "updated_at": "2026-02-19T14:15:35.689496Z"
+    },
+    "oija": {
+      "id": "oija",
+      "title": "Add output feedback to opencode run command",
+      "body": "\n## Goal\nAdd output feedback to the 'pebbles start' command so users know when opencode is working.\n\n## Acceptance Criteria\n- [x] Add --print-logs flag to pebbles start command\n- [x] --print-logs flag passes through to opencode run command\n- [x] On non-Unix systems, stdout/stderr is inherited when --print-logs is set\n\n## Implementation Notes\n\nAdded a new --print-logs flag to the 'pebbles start' command:\n\n### Changes Made:\n1. **src/cli.rs:52-54** - Added --print-logs flag to Start command with help text\n2. **src/main.rs:27,34** - Updated Start command handler to pass print_logs parameter\n3. **src/commands/start.rs:13,78-80,84,89-101** - \n   - Updated function signature to accept print_logs parameter\n   - Pass --print-logs to opencode when flag is set\n   - On non-Unix systems, inherit stdout/stderr when flag is set\n\n### Usage:\n```\npebbles start <id> --print-logs\n```\n\nThis will show opencode's output/logs to the console instead of running silently.\n\n## Log\n- 2026-02-19: Added --print-logs flag to pebbles start command\n",
+      "status": "done",
+      "priority": "high",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:49:43.672257Z",
+      "updated_at": "2026-02-19T13:35:13.125266Z"
+    },
     "2p4t": {
       "id": "2p4t",
       "title": "abc",
@@ -38,6 +51,19 @@
       "tags": [],
       "created_at": "2026-02-18T21:06:10.592887Z",
       "updated_at": "2026-02-18T21:14:31.428830Z"
+    },
+    "fq24": {
+      "id": "fq24",
+      "title": "abcd",
+      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
+      "status": "done",
+      "priority": "medium",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:18.410303Z",
+      "updated_at": "2026-02-18T22:28:08.567409Z"
     },
     "hoy9": {
       "id": "hoy9",
@@ -55,7 +81,7 @@
     "0zu0": {
       "id": "0zu0",
       "title": "add plan command",
-      "body": "The idea of the plan command is we go ahead and review the contents of the issue and then invoke open code with our custom plan command, which allows us to further refine the issues before we approve them.",
+      "body": "The idea of the plan command is to enrich an existing issue.\n\n1. open and read the issue\n2. it's assumed that this issue may not be well thought out yet\n3. ask the user any questions you have, and then update the issue with your thoughts.\n4. if it seems like a multistep issue, create the needed child issues\n",
       "status": "draft",
       "priority": "medium",
       "parent": null,
@@ -63,20 +89,7 @@
       "dependencies": [],
       "tags": [],
       "created_at": "2026-02-18T22:40:38.651291Z",
-      "updated_at": "2026-02-18T22:40:38.651291Z"
-    },
-    "oija": {
-      "id": "oija",
-      "title": "Add output feedback to opencode run command",
-      "body": "\n## Goal\nAdd output feedback to the 'pebbles start' command so users know when opencode is working.\n\n## Acceptance Criteria\n- [x] Add --print-logs flag to pebbles start command\n- [x] --print-logs flag passes through to opencode run command\n- [x] On non-Unix systems, stdout/stderr is inherited when --print-logs is set\n\n## Implementation Notes\n\nAdded a new --print-logs flag to the 'pebbles start' command:\n\n### Changes Made:\n1. **src/cli.rs:52-54** - Added --print-logs flag to Start command with help text\n2. **src/main.rs:27,34** - Updated Start command handler to pass print_logs parameter\n3. **src/commands/start.rs:13,78-80,84,89-101** - \n   - Updated function signature to accept print_logs parameter\n   - Pass --print-logs to opencode when flag is set\n   - On non-Unix systems, inherit stdout/stderr when flag is set\n\n### Usage:\n```\npebbles start <id> --print-logs\n```\n\nThis will show opencode's output/logs to the console instead of running silently.\n\n## Log\n- 2026-02-19: Added --print-logs flag to pebbles start command\n",
-      "status": "done",
-      "priority": "high",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T22:49:43.672257Z",
-      "updated_at": "2026-02-19T13:35:13.125266Z"
+      "updated_at": "2026-02-19T13:55:43.656485Z"
     }
   },
   "events": [
@@ -364,6 +377,27 @@
         "to": "done"
       },
       "created_at": "2026-02-19T13:35:13.125280Z"
+    },
+    {
+      "id": "4ee900eb-af6a-4ac1-98a0-20f5d1008ab5",
+      "change_id": "0zu0",
+      "event_type": "updated",
+      "data": {
+        "editor": "code --wait",
+        "field": "body"
+      },
+      "created_at": "2026-02-19T13:55:43.656513Z"
+    },
+    {
+      "id": "104f7d9f-034b-4242-b61b-f0ed058a80e1",
+      "change_id": "hag1",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "id's should use a strong type ID, rather than String and &str"
+      },
+      "created_at": "2026-02-19T14:16:29.868127Z"
     }
   ]
 }
