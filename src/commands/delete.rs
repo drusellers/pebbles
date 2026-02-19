@@ -1,19 +1,16 @@
 use crate::commands::print_success;
-use crate::config::get_db_path;
-use crate::db::Db;
 use crate::idish::IDish;
+use crate::repository::ChangeRepository;
 use anyhow::Result;
 
 pub async fn delete(id: IDish, force: bool) -> Result<()> {
-    let db_path = get_db_path()?;
-
-    let mut db = Db::open(&db_path).await?;
+    let mut repo = ChangeRepository::open().await?;
 
     // Resolve ID to full ID
-    let full_id = id.resolve(&db)?;
+    let full_id = id.resolve(&repo.db)?;
 
     // Check if change exists
-    let change = db.get_change(&full_id)
+    let change = repo.db.get_change(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
     // Confirm deletion unless --force
@@ -33,8 +30,8 @@ pub async fn delete(id: IDish, force: bool) -> Result<()> {
     }
 
     // Delete the change
-    db.delete_change(&full_id)?;
-    db.save().await?;
+    repo.db.delete_change(&full_id)?;
+    repo.save().await?;
 
     print_success(&format!("Deleted change {}", full_id));
 

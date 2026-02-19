@@ -1,6 +1,6 @@
 use crate::cli::NewArgs;
 use crate::commands::{print_info, print_success};
-use crate::config::{get_config_path, get_db_path};
+use crate::config::get_config_path;
 use crate::id::Id;
 use crate::models::{Change, Priority};
 use crate::repository::ChangeRepository;
@@ -10,9 +10,7 @@ use rand::{thread_rng, Rng};
 const ALPHANUMERIC: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
 
 pub async fn new(args: NewArgs) -> Result<()> {
-    let db_path = get_db_path()?;
-    
-    let mut repo = ChangeRepository::open(db_path).await?;
+    let mut repo = ChangeRepository::open().await?;
     
     // Generate unique ID
     let id = generate_unique_id(&repo).await?;

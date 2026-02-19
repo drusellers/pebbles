@@ -1,6 +1,4 @@
 use crate::commands::print_success;
-use crate::config::get_db_path;
-use crate::db::Db;
 use crate::idish::IDish;
 use crate::models::Event;
 use crate::models::EventType;
@@ -8,19 +6,16 @@ use crate::repository::ChangeRepository;
 use anyhow::Result;
 
 pub async fn block(change_id: IDish, dependency_id: IDish) -> Result<()> {
-    let db_path = get_db_path()?;
+    let mut repo = ChangeRepository::open().await?;
 
     // Resolve both IDs
-    let db = Db::open(&db_path).await?;
-    let full_change_id = change_id.resolve(&db)?;
-    let full_dependency_id = dependency_id.resolve(&db)?;
+    let full_change_id = change_id.resolve(&repo.db)?;
+    let full_dependency_id = dependency_id.resolve(&repo.db)?;
 
     // Check that we're not trying to block ourselves
     if full_change_id == full_dependency_id {
         anyhow::bail!("A change cannot block itself");
     }
-
-    let mut repo = ChangeRepository::open(db_path).await?;
 
     // Verify both changes exist
     let change = repo
@@ -69,14 +64,11 @@ pub async fn block(change_id: IDish, dependency_id: IDish) -> Result<()> {
 }
 
 pub async fn unblock(change_id: IDish, dependency_id: IDish) -> Result<()> {
-    let db_path = get_db_path()?;
+    let mut repo = ChangeRepository::open().await?;
 
     // Resolve both IDs
-    let db = Db::open(&db_path).await?;
-    let full_change_id = change_id.resolve(&db)?;
-    let full_dependency_id = dependency_id.resolve(&db)?;
-
-    let mut repo = ChangeRepository::open(db_path).await?;
+    let full_change_id = change_id.resolve(&repo.db)?;
+    let full_dependency_id = dependency_id.resolve(&repo.db)?;
 
     // Verify the change exists
     let change = repo

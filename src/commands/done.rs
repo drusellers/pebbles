@@ -1,6 +1,4 @@
 use crate::commands::{print_info, print_success, resolve_id};
-use crate::config::get_db_path;
-use crate::db::Db;
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
@@ -8,19 +6,9 @@ use crate::vcs::detect_vcs;
 use anyhow::Result;
 
 pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
-    let db_path = get_db_path()?;
+    let full_id = resolve_id(id).await?;
 
-    // Handle ID resolution first
-    let full_id = if let Some(id) = id {
-        // Resolve ID to full ID using the db directly
-        let db = Db::open(&db_path).await?;
-        id.resolve(&db)?
-    } else {
-        // Use workspace detection
-        resolve_id(None).await?
-    };
-
-    let mut repo = ChangeRepository::open(db_path).await?;
+    let mut repo = ChangeRepository::open().await?;
 
     let change = repo.find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;

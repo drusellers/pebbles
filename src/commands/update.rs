@@ -1,7 +1,5 @@
 use crate::cli::UpdateArgs;
 use crate::commands::{print_success, resolve_id};
-use crate::config::get_db_path;
-use crate::db::Db;
 use crate::id::Id;
 use crate::idish::IDish;
 use crate::models::{Event, EventType, Priority, Status};
@@ -9,19 +7,9 @@ use crate::repository::ChangeRepository;
 use anyhow::{Context, Result};
 
 pub async fn update(args: UpdateArgs) -> Result<()> {
-    let db_path = get_db_path()?;
+    let full_id = resolve_id(args.id).await?;
 
-    // Handle ID resolution first
-    let full_id = if let Some(id) = args.id {
-        // Resolve ID to full ID using the db directly
-        let db = Db::open(&db_path).await?;
-        id.resolve(&db)?
-    } else {
-        // Use workspace detection
-        resolve_id(None).await?
-    };
-
-    let mut repo = ChangeRepository::open(db_path).await?;
+    let mut repo = ChangeRepository::open().await?;
 
     // Track events to add later
     let mut events = Vec::new();

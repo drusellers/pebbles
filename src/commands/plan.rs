@@ -1,5 +1,5 @@
 use crate::commands::{print_info, resolve_id};
-use crate::config::{get_config_path, get_db_path, Config};
+use crate::config::{get_config_path, Config};
 use crate::idish::IDish;
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
@@ -8,15 +8,12 @@ use colored::Colorize;
 use std::process::Command;
 
 pub async fn plan(id: Option<IDish>, wait: bool) -> Result<()> {
-    let db_path = get_db_path()?;
+    let repo = ChangeRepository::open().await?;
 
-    let db = crate::db::Db::open(&db_path).await?;
     let full_id = match id {
-        Some(id) => id.resolve(&db)?,
+        Some(id) => id.resolve(&repo.db)?,
         None => resolve_id(None).await?,
     };
-
-    let repo = ChangeRepository::open(db_path).await?;
 
     let change = repo
         .find_by_id(&full_id)

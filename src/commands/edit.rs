@@ -1,25 +1,14 @@
 use crate::commands::{print_success, resolve_id};
-use crate::config::{get_config_path, get_db_path, Config};
-use crate::db::Db;
+use crate::config::{get_config_path, Config};
 use crate::idish::IDish;
 use crate::models::{Event, EventType};
 use crate::repository::ChangeRepository;
 use anyhow::{Context, Result};
 
 pub async fn edit(id: Option<IDish>) -> Result<()> {
-    let db_path = get_db_path()?;
+    let full_id = resolve_id(id).await?;
 
-    // Handle ID resolution first
-    let full_id = if let Some(id) = id {
-        // Resolve ID to full ID using the db directly
-        let db = Db::open(&db_path).await?;
-        id.resolve(&db)?
-    } else {
-        // Use workspace detection
-        resolve_id(None).await?
-    };
-
-    let mut repo = ChangeRepository::open(db_path).await?;
+    let mut repo = ChangeRepository::open().await?;
 
     let change = repo.find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;

@@ -1,15 +1,21 @@
+use crate::config::get_db_path;
 use crate::db::Db;
 use crate::id::Id;
 use crate::models::{Change, Event, EventType, Status};
 use anyhow::Result;
-use std::path::PathBuf;
+use std::path::Path;
 
 pub struct ChangeRepository {
     pub db: Db,
 }
 
 impl ChangeRepository {
-    pub async fn open(path: PathBuf) -> Result<Self> {
+    pub async fn open() -> Result<Self> {
+        let path = get_db_path()?;
+        Self::open_from(path).await
+    }
+
+    pub async fn open_from(path: impl AsRef<Path>) -> Result<Self> {
         let db = Db::open(path).await?;
         Ok(Self { db })
     }

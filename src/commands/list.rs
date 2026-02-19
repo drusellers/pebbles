@@ -1,5 +1,4 @@
 use crate::cli::ListArgs;
-use crate::config::get_db_path;
 use crate::id::Id;
 use crate::models::{Change, Status};
 use crate::repository::ChangeRepository;
@@ -9,9 +8,7 @@ use colored::Colorize;
 use std::collections::{HashMap, HashSet};
 
 pub async fn list(args: ListArgs) -> Result<()> {
-    let db_path = get_db_path()?;
-
-    let repo = ChangeRepository::open(db_path).await?;
+    let repo = ChangeRepository::open().await?;
 
     let status = args.status.as_deref();
     let priority = args.priority.as_deref();

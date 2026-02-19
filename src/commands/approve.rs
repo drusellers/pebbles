@@ -1,19 +1,13 @@
 use crate::commands::print_success;
-use crate::config::get_db_path;
-use crate::db::Db;
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
 use anyhow::Result;
 
 pub async fn approve(id: IDish) -> Result<()> {
-    let db_path = get_db_path()?;
+    let mut repo = ChangeRepository::open().await?;
 
-    // Resolve ID to full ID first
-    let db = Db::open(&db_path).await?;
-    let full_id = id.resolve(&db)?;
-
-    let mut repo = ChangeRepository::open(db_path).await?;
+    let full_id = id.resolve(&repo.db)?;
 
     let change = repo.find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;

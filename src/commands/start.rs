@@ -1,6 +1,5 @@
 use crate::commands::{print_info, print_success};
-use crate::config::{get_config_path, get_db_path, Config};
-use crate::db::Db;
+use crate::config::{get_config_path, Config};
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
@@ -10,12 +9,9 @@ use std::path::PathBuf;
 use std::process::Command;
 
 pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_permissions: bool) -> Result<()> {
-    let db_path = get_db_path()?;
+    let mut repo = ChangeRepository::open().await?;
 
-    let db = Db::open(&db_path).await?;
-    let full_id = id.resolve(&db)?;
-
-    let mut repo = ChangeRepository::open(db_path).await?;
+    let full_id = id.resolve(&repo.db)?;
 
     let change = repo.find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;

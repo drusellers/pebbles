@@ -155,7 +155,11 @@ mod tests {
         let result = idish.resolve(&db);
         assert!(result.is_err());
 
-        match result.unwrap_err() {
+        let err = result.unwrap_err();
+        let idish_err = err
+            .downcast_ref::<IDishError>()
+            .expect("Expected IDishError");
+        match idish_err {
             IDishError::Ambiguous { prefix, candidates } => {
                 assert_eq!(prefix, "ab");
                 assert_eq!(candidates.len(), 2);
@@ -174,7 +178,11 @@ mod tests {
         let result = idish.resolve(&db);
         assert!(result.is_err());
 
-        match result.unwrap_err() {
+        let err = result.unwrap_err();
+        let idish_err = err
+            .downcast_ref::<IDishError>()
+            .expect("Expected IDishError");
+        match idish_err {
             IDishError::NotFound { prefix } => {
                 assert_eq!(prefix, "xyz9");
             }

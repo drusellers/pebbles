@@ -1,25 +1,13 @@
 use crate::commands::{resolve_id, format_id_with_unique_prefix};
-use crate::config::get_db_path;
-use crate::db::Db;
 use crate::idish::IDish;
 use crate::repository::ChangeRepository;
 use anyhow::Result;
 use colored::Colorize;
 
 pub async fn show(id: Option<IDish>) -> Result<()> {
-    let db_path = get_db_path()?;
+    let full_id = resolve_id(id).await?;
 
-    // Handle ID resolution first
-    let full_id = if let Some(id) = id {
-        // Resolve ID to full ID using the db directly
-        let db = Db::open(&db_path).await?;
-        id.resolve(&db)?
-    } else {
-        // Use workspace detection
-        resolve_id(None).await?
-    };
-
-    let repo = ChangeRepository::open(db_path).await?;
+    let repo = ChangeRepository::open().await?;
 
     let change = repo.find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
