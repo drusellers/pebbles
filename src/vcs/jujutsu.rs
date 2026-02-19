@@ -73,10 +73,7 @@ impl Vcs for Jujutsu {
         let current_dir = std::env::current_dir().ok()?;
         let dir_name = current_dir.file_name()?.to_str()?;
 
-        dir_name
-            .strip_prefix("ws-")
-            .map(|s| Id::new(s).ok())
-            .flatten()
+        dir_name.strip_prefix("ws-").and_then(|s| Id::new(s).ok())
     }
 
     fn commit(&self, message: &str) -> Result<()> {

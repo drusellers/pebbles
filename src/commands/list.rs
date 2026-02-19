@@ -25,9 +25,11 @@ pub async fn list(args: ListArgs) -> Result<()> {
         return Ok(());
     }
 
-    // Calculate unique prefixes for IDs (like jj)
-    let ids: Vec<Id> = changes.iter().map(|c| c.id.clone()).collect();
-    let id_prefixes = calculate_unique_prefixes(&ids);
+    // Calculate unique prefixes for IDs based on ALL changes (like jj)
+    // This ensures prefixes are unique even when considering completed items
+    let all_changes = repo.list(None, None, None, true);
+    let all_ids: Vec<Id> = all_changes.iter().map(|c| c.id.clone()).collect();
+    let id_prefixes = calculate_unique_prefixes(&all_ids);
 
     if args.flat {
         // Flat list mode - use bordered table
@@ -435,13 +437,13 @@ mod tests {
 
     fn create_test_change(id: &str, parent: Option<&str>, title: &str) -> Change {
         Change {
-            id: ID::new(id),
+            id: Id::new(id).expect("Invalid test ID"),
             title: title.to_string(),
             body: "".to_string(),
             status: Status::Draft,
             priority: crate::models::Priority::Medium,
             changelog_type: None,
-            parent: parent.map(|p| ID::new(p)),
+            parent: parent.map(|p| Id::new(p).expect("Invalid test parent ID")),
             children: Vec::new(),
             dependencies: Vec::new(),
             tags: Vec::new(),
@@ -461,18 +463,18 @@ mod tests {
     #[test]
     fn test_calculate_unique_prefixes() {
         let ids = vec![
-            ID::new("abc1"),
-            ID::new("abc2"),
-            ID::new("def3"),
+            Id::new("abc1").expect("Invalid test ID"),
+            Id::new("abc2").expect("Invalid test ID"),
+            Id::new("def3").expect("Invalid test ID"),
         ];
 
         let prefixes = calculate_unique_prefixes(&ids);
 
         // "abc1" and "abc2" share prefix "abc", so need 4 chars to be unique
-        assert_eq!(prefixes.get(&ID::new("abc1")).unwrap(), &4);
-        assert_eq!(prefixes.get(&ID::new("abc2")).unwrap(), &4);
+        assert_eq!(prefixes.get(&Id::new("abc1").unwrap()).unwrap(), &4);
+        assert_eq!(prefixes.get(&Id::new("abc2").unwrap()).unwrap(), &4);
         // "def3" is unique with just "d"
-        assert_eq!(prefixes.get(&ID::new("def3")).unwrap(), &1);
+        assert_eq!(prefixes.get(&Id::new("def3").unwrap()).unwrap(), &1);
     }
 
     #[test]

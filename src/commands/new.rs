@@ -72,7 +72,7 @@ fn generate_id() -> String {
 
 async fn generate_unique_id(repo: &ChangeRepository) -> Result<Id> {
     for _ in 0..100 {
-        let id = Id::new(&generate_id()).map_err(|e| anyhow::anyhow!("Failed to generate ID: {}", e))?;
+        let id = Id::new(generate_id()).map_err(|e| anyhow::anyhow!("Failed to generate ID: {}", e))?;
         if repo.find_by_id(&id).is_none() {
             return Ok(id);
         }
