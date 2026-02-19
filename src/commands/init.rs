@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
-use std::path::PathBuf;
 
 use crate::commands::print_success;
 use crate::config::{Config, find_pebbles_root};
 use crate::db::Db;
+use crate::vcs::find_repo_root;
 
 pub async fn init() -> Result<()> {
     // Check if already initialized
@@ -41,22 +41,6 @@ pub async fn init() -> Result<()> {
     ));
 
     Ok(())
-}
-
-fn find_repo_root() -> Option<PathBuf> {
-    let mut current = std::env::current_dir().ok()?;
-
-    loop {
-        if current.join(".git").exists() || current.join(".jj").exists() {
-            return Some(current);
-        }
-
-        if !current.pop() {
-            break;
-        }
-    }
-
-    None
 }
 
 async fn create_opencode_commands(repo_root: &std::path::Path) -> Result<()> {

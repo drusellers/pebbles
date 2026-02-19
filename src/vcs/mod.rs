@@ -65,3 +65,29 @@ fn run_cmd(cmd: &mut Command) -> Result<String> {
 
     Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
 }
+
+pub fn find_repo_root() -> Option<PathBuf> {
+    let mut current = std::env::current_dir().ok()?;
+
+    loop {
+        if current.join(".git").exists() || current.join(".jj").exists() {
+            return Some(current);
+        }
+
+        if !current.pop() {
+            break;
+        }
+    }
+
+    None
+}
+
+pub fn find_workspace_parent() -> Result<PathBuf> {
+    let repo_root = find_repo_root().context("Not in a git or jujutsu repository")?;
+
+    let parent = repo_root
+        .parent()
+        .context("Repository is at filesystem root, cannot create sibling workspace")?;
+
+    Ok(parent.to_path_buf())
+}
