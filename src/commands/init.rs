@@ -64,5 +64,12 @@ async fn create_opencode_commands(repo_root: &std::path::Path) -> Result<()> {
         describe_content
     ).await?;
 
+    // Create describe command
+    let plan_content = include_str!("../../.opencode/commands/plan.md");
+    tokio::fs::write(
+        opencode_dir.join("plan.md"),
+        plan_content
+    ).await?;
+
     Ok(())
 }

@@ -39,6 +39,9 @@ pebbles start <id> --isolate
 # Open TUI without auto-running /implement
 pebbles start <id> --wait
 
+# Create changes from text file (intake)
+pebbles intake features.txt
+
 # When done, mark complete
 pebbles done <id>
 ```
@@ -78,6 +81,7 @@ Draft → Approved → InProgress → Review → Done
 | `done`        | Mark a change as done                                            |
 | `log`         | Show event history for a change                                  |
 | `cleanup`     | Clean up a workspace after work is complete                      |
+| `intake`      | Intake text from file or STDIN to create changes                 |
 | `completions` | Generate shell completions                                       |
 
 ## Configuration
@@ -118,6 +122,26 @@ When you run `pebbles start <id>`, it:
 The `.opencode/commands/` directory contains:
 - `implement.md` - Guide for AI implementation
 - `describe.md` - Commit message generator
+
+## Intake Workflow
+
+The `intake` command allows you to create multiple related changes from a single text input. This is useful for importing feature requests, bug reports, or planning documents.
+
+```bash
+# Read from a file
+pebbles intake features.txt
+
+# Read from STDIN
+cat features.txt | pebbles intake
+```
+
+The text is passed to opencode, which will:
+1. Parse the content to identify a parent/top-level issue
+2. Identify all child/sub-tasks
+3. Create the parent change
+4. Create all child changes linked to the parent
+
+This creates a hierarchical structure of related work items.
 
 ## License
 

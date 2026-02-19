@@ -44,5 +44,7 @@ async fn main() -> Result<()> {
         Commands::Delete { id, force } => commands::delete(id, force).await,
         Commands::Block { change_id, dependency_id } => commands::block(change_id, dependency_id).await,
         Commands::Unblock { change_id, dependency_id } => commands::unblock(change_id, dependency_id).await,
+        Commands::Plan { id, wait } => commands::plan(id, wait).await,
+        Commands::Intake { file } => commands::intake(file).await,
     }
 }

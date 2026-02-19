@@ -127,6 +127,21 @@ pub enum Commands {
         /// Change ID to remove as a dependency
         dependency_id: IDish,
     },
+
+    /// Plan and break down a change into actionable steps
+    Plan {
+        /// Change ID (or current change if not specified)
+        id: Option<IDish>,
+        /// Don't auto-run /plan (opens opencode TUI instead)
+        #[arg(long)]
+        wait: bool,
+    },
+
+    /// Intake text from file or STDIN to create changes
+    Intake {
+        /// Path to file containing the text (reads from STDIN if not provided)
+        file: Option<std::path::PathBuf>,
+    },
 }
 
 #[derive(Parser)]

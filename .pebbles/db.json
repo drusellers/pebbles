@@ -1,77 +1,5 @@
 {
   "changes": {
-    "6vt4": {
-      "id": "6vt4",
-      "title": "add ls alias to list",
-      "body": "## Implementation\n\nAdded `ls` as a visible alias for the `list` command in src/cli.rs.\n\n## Log\n- 2026-02-18: Added `#[command(visible_alias = \"ls\")]` to List variant",
-      "status": "done",
-      "priority": "medium",
-      "changelog_type": null,
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T22:40:24.940070Z",
-      "updated_at": "2026-02-18T22:49:04.754953Z"
-    },
-    "fq24": {
-      "id": "fq24",
-      "title": "abcd",
-      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
-      "status": "done",
-      "priority": "medium",
-      "changelog_type": null,
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T21:06:18.410303Z",
-      "updated_at": "2026-02-18T22:28:08.567409Z"
-    },
-    "2p4t": {
-      "id": "2p4t",
-      "title": "abc",
-      "body": "\n## Implementation Notes\n\nImplemented unique prefix highlighting for change IDs in the 'pebbles show' command.\n\n### Changes Made:\n1. Added 'unique_prefix_len()' function in src/commands/mod.rs:74 to calculate the minimum prefix length needed to uniquely identify a change ID among all others\n2. Added 'format_id_with_unique_prefix()' function in src/commands/mod.rs:96 to format the ID with the unique prefix in bold cyan and the rest dimmed\n3. Updated 'show' command in src/commands/show.rs:20-26 to use the new formatting\n\n### Technical Details:\n- The unique prefix is calculated by comparing the target ID against all other change IDs\n- The shortest prefix that makes the ID unique is highlighted\n- Format: unique prefix in bold cyan, remaining characters dimmed\n- Example: If change '2p4t' is the only one starting with '2', it will display as **2**p4t (with '2' bold and 'p4t' dimmed)\n\n## Log\n- 2026-02-18: Implemented unique prefix highlighting for change IDs\n",
-      "status": "done",
-      "priority": "medium",
-      "changelog_type": null,
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T21:06:10.592887Z",
-      "updated_at": "2026-02-18T21:14:31.428830Z"
-    },
-    "hoy9": {
-      "id": "hoy9",
-      "title": "Add support for issues with dependencies",
-      "body": "Docket would call these epics, not the world's biggest fan of epic, but we want to track the idea of dependencies between issues and also show that in the list view. This means the list view is going to need a tree mode. so the \"list\" view should probably not draw boxes around everything - the table code should not have borders but still help us control the output (i.e. the width.)",
-      "status": "draft",
-      "priority": "medium",
-      "changelog_type": null,
-      "parent": null,
-      "children": [],
-      "dependencies": [
-        "0zu0"
-      ],
-      "tags": [],
-      "created_at": "2026-02-18T22:37:31.482437Z",
-      "updated_at": "2026-02-19T15:28:13.671182Z"
-    },
-    "0zu0": {
-      "id": "0zu0",
-      "title": "add plan command",
-      "body": "The idea of the plan command is to enrich an existing issue.\n\n1. open and read the issue\n2. it's assumed that this issue may not be well thought out yet\n3. ask the user any questions you have, and then update the issue with your thoughts.\n4. if it seems like a multistep issue, create the needed child issues\n",
-      "status": "draft",
-      "priority": "medium",
-      "changelog_type": null,
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T22:40:38.651291Z",
-      "updated_at": "2026-02-19T15:25:36.193446Z"
-    },
     "oija": {
       "id": "oija",
       "title": "Add output feedback to opencode run command",
@@ -85,6 +13,20 @@
       "tags": [],
       "created_at": "2026-02-18T22:49:43.672257Z",
       "updated_at": "2026-02-19T13:35:13.125266Z"
+    },
+    "hoy9": {
+      "id": "hoy9",
+      "title": "Add support for issues with dependencies",
+      "body": "Docket would call these epics, not the world's biggest fan of epic, but we want to track the idea of dependencies between issues and also show that in the list view. This means the list view is going to need a tree mode. so the \"list\" view should probably not draw boxes around everything - the table code should not have borders but still help us control the output (i.e. the width.)",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:37:31.482437Z",
+      "updated_at": "2026-02-19T15:34:57.901739Z"
     },
     "lx24": {
       "id": "lx24",
@@ -100,22 +42,75 @@
       "created_at": "2026-02-19T14:39:16.189076Z",
       "updated_at": "2026-02-19T15:19:42.275819Z"
     },
-    "2myi": {
-      "id": "2myi",
-      "title": "Add intake command",
-      "body": "Add an intake command that can read a file or STDIN - processes the text, and creates issues.\n\n\n```sh\ncat SOME_FILE.txt | pebbles intake\n```\n\n```sh\npebbles intake \"./path/to/file.txt\" \n```\n\nWe need a new command `/intake` that gives the llm instructions to read text and create issues",
-      "status": "draft",
+    "0zu0": {
+      "id": "0zu0",
+      "title": "add plan command",
+      "body": "## Goal\nImplement a `plan` command for pebbles that helps users break down and enrich existing issues by invoking opencode's /plan command.\n\n## Acceptance Criteria\n\n- [x] Command opens and reads the issue\n- [x] Displays change details before invoking opencode\n- [x] Invokes `opencode run /plan` for the user\n- [x] Works with optional ID or current workspace\n- [x] Creates `.opencode/commands/plan.md` prompt\n\n## Context\n\nThe plan command should:\n1. Display the change details\n2. Launch opencode with `opencode run /plan`\n3. Set PEBBLES_CHANGE and PEBBLES_VCS environment variables\n4. The plan.md prompt guides the LLM through:\n   - Reviewing acceptance criteria\n   - Scanning the codebase for context\n   - Creating an implementation checklist\n   - Identifying dependencies\n   - Updating the change body\n\n## Implementation Notes\n\nCreated:\n- `src/commands/plan.rs` - Displays change and launches opencode\n- `.opencode/commands/plan.md` - LLM prompt for planning workflow\n\nLog:\n- 2026-02-19: Implemented plan command that invokes opencode run /plan\n- 2026-02-19: Created plan.md with structured planning workflow",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": "feature",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:40:38.651291Z",
+      "updated_at": "2026-02-19T15:47:27.159288Z"
+    },
+    "2p4t": {
+      "id": "2p4t",
+      "title": "abc",
+      "body": "\n## Implementation Notes\n\nImplemented unique prefix highlighting for change IDs in the 'pebbles show' command.\n\n### Changes Made:\n1. Added 'unique_prefix_len()' function in src/commands/mod.rs:74 to calculate the minimum prefix length needed to uniquely identify a change ID among all others\n2. Added 'format_id_with_unique_prefix()' function in src/commands/mod.rs:96 to format the ID with the unique prefix in bold cyan and the rest dimmed\n3. Updated 'show' command in src/commands/show.rs:20-26 to use the new formatting\n\n### Technical Details:\n- The unique prefix is calculated by comparing the target ID against all other change IDs\n- The shortest prefix that makes the ID unique is highlighted\n- Format: unique prefix in bold cyan, remaining characters dimmed\n- Example: If change '2p4t' is the only one starting with '2', it will display as **2**p4t (with '2' bold and 'p4t' dimmed)\n\n## Log\n- 2026-02-18: Implemented unique prefix highlighting for change IDs\n",
+      "status": "done",
       "priority": "medium",
       "changelog_type": null,
       "parent": null,
       "children": [],
-      "dependencies": [
-        "hoy9",
-        "0zu0"
-      ],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:10.592887Z",
+      "updated_at": "2026-02-18T21:14:31.428830Z"
+    },
+    "fq24": {
+      "id": "fq24",
+      "title": "abcd",
+      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:18.410303Z",
+      "updated_at": "2026-02-18T22:28:08.567409Z"
+    },
+    "6vt4": {
+      "id": "6vt4",
+      "title": "add ls alias to list",
+      "body": "## Implementation\n\nAdded `ls` as a visible alias for the `list` command in src/cli.rs.\n\n## Log\n- 2026-02-18: Added `#[command(visible_alias = \"ls\")]` to List variant",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:40:24.940070Z",
+      "updated_at": "2026-02-18T22:49:04.754953Z"
+    },
+    "2myi": {
+      "id": "2myi",
+      "title": "Add intake command",
+      "body": "\n## Log\n- 2026-02-19: Implemented intake command with file/STDIN reading, opencode integration, tests, and documentation\n\n## Acceptance Criteria\n\n1. **CLI Interface**\n   - [x] Add `intake` command to CLI with optional file path argument\n   - [x] Support reading from STDIN when no file is provided\n   - [x] Support reading from file when path is provided\n\n2. **Text Processing**\n   - [x] Read content from file or STDIN\n   - [x] Parse text to identify a single top-level issue\n   - [x] Identify all child issues from the text\n   - [x] Pass structured data to opencode with instructions to create issues\n\n3. **Issue Creation**\n   - [x] Launch opencode with `/intake` command\n   - [x] Create a single parent/top-level change\n   - [x] Create all other changes as children of the parent change\n   - [x] Each change should have a title extracted from the text\n\n4. **Error Handling**\n   - [x] Handle file not found errors gracefully\n   - [x] Handle empty input gracefully\n   - [x] Validate pebbles repository is initialized\n",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": "feature",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
       "tags": [],
       "created_at": "2026-02-19T14:35:55.986061Z",
-      "updated_at": "2026-02-19T15:25:47.529652Z"
+      "updated_at": "2026-02-19T16:43:52.171958Z"
     }
   },
   "events": [
@@ -527,49 +522,159 @@
       "created_at": "2026-02-19T15:19:42.275827Z"
     },
     {
-      "id": "qsym",
-      "change_id": "0zu0",
-      "event_type": "dependency_added",
-      "data": {
-        "dependency_id": "hoy9"
-      },
-      "created_at": "2026-02-19T15:25:32.598510Z"
-    },
-    {
-      "id": "8eha",
-      "change_id": "0zu0",
-      "event_type": "dependency_removed",
-      "data": {
-        "dependency_id": "hoy9"
-      },
-      "created_at": "2026-02-19T15:25:36.193518Z"
-    },
-    {
-      "id": "1py2",
-      "change_id": "2myi",
-      "event_type": "dependency_added",
-      "data": {
-        "dependency_id": "hoy9"
-      },
-      "created_at": "2026-02-19T15:25:47.196357Z"
-    },
-    {
-      "id": "i5ia",
-      "change_id": "2myi",
-      "event_type": "dependency_added",
-      "data": {
-        "dependency_id": "0zu0"
-      },
-      "created_at": "2026-02-19T15:25:47.529728Z"
-    },
-    {
-      "id": "9xiv",
+      "id": "u175",
       "change_id": "hoy9",
-      "event_type": "dependency_added",
+      "event_type": "status_changed",
       "data": {
-        "dependency_id": "0zu0"
+        "from": "draft",
+        "to": "approved"
       },
-      "created_at": "2026-02-19T15:28:13.671246Z"
+      "created_at": "2026-02-19T15:22:51.616725Z"
+    },
+    {
+      "id": "54wk",
+      "change_id": "hoy9",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-19T15:23:15.913307Z"
+    },
+    {
+      "id": "hrvn",
+      "change_id": "hoy9",
+      "event_type": "status_changed",
+      "data": {
+        "from": "in_progress",
+        "to": "done"
+      },
+      "created_at": "2026-02-19T15:34:57.901767Z"
+    },
+    {
+      "id": "abl4",
+      "change_id": "0zu0",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-19T15:38:49.432682Z"
+    },
+    {
+      "id": "61gz",
+      "change_id": "0zu0",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-19T15:38:51.571891Z"
+    },
+    {
+      "id": "kac2",
+      "change_id": "0zu0",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-19T15:41:15.922251Z"
+    },
+    {
+      "id": "e0ia",
+      "change_id": "0zu0",
+      "event_type": "status_changed",
+      "data": {
+        "from": "in_progress",
+        "to": "done"
+      },
+      "created_at": "2026-02-19T15:41:18.679772Z"
+    },
+    {
+      "id": "2awl",
+      "change_id": "0zu0",
+      "event_type": "changelog_type_changed",
+      "data": {
+        "from": null,
+        "to": "feature"
+      },
+      "created_at": "2026-02-19T15:41:49.428781Z"
+    },
+    {
+      "id": "yp5g",
+      "change_id": "0zu0",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-19T15:44:47.686234Z"
+    },
+    {
+      "id": "db6z",
+      "change_id": "0zu0",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-19T15:47:27.159295Z"
+    },
+    {
+      "id": "x4ui",
+      "change_id": "2myi",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-19T16:38:01.848237Z"
+    },
+    {
+      "id": "d8ih",
+      "change_id": "2myi",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-19T16:39:31.359480Z"
+    },
+    {
+      "id": "iylr",
+      "change_id": "2myi",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-19T16:39:43.082820Z"
+    },
+    {
+      "id": "5bop",
+      "change_id": "2myi",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-19T16:42:40.566773Z"
+    },
+    {
+      "id": "8hzq",
+      "change_id": "2myi",
+      "event_type": "changelog_type_changed",
+      "data": {
+        "from": null,
+        "to": "feature"
+      },
+      "created_at": "2026-02-19T16:43:49.585141Z"
+    },
+    {
+      "id": "hx66",
+      "change_id": "2myi",
+      "event_type": "status_changed",
+      "data": {
+        "from": "in_progress",
+        "to": "done"
+      },
+      "created_at": "2026-02-19T16:43:52.171966Z"
     }
   ]
 }
