@@ -1,5 +1,5 @@
 use crate::cli::NewArgs;
-use crate::commands::{print_info, print_success};
+use crate::commands::{format_id_with_unique_prefix, print_info, print_success};
 use crate::config::get_config_path;
 use crate::id::Id;
 use crate::models::{Change, Priority};
@@ -48,7 +48,13 @@ pub async fn new(args: NewArgs) -> Result<()> {
     // Save
     repo.create(change).await?;
     
-    print_success(&format!("Created change {}: {}", id, repo.find_by_id(&id).unwrap().title));
+    // Get all IDs to calculate unique prefix for the new ID
+    let all_changes = repo.list(None, None, None, true);
+    let all_ids: Vec<String> = all_changes.iter().map(|c| c.id.to_string()).collect();
+    let all_id_refs: Vec<&str> = all_ids.iter().map(|s| s.as_str()).collect();
+    
+    let formatted_id = format_id_with_unique_prefix(&id.to_string(), &all_id_refs);
+    print_success(&format!("Created change {}: {}", formatted_id, repo.find_by_id(&id).unwrap().title));
     
     if args.edit {
         print_info("Use 'pebbles edit <id>' to edit the body later");

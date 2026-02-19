@@ -15,7 +15,20 @@ Check if the change has acceptance criteria in its body:
 - If no acceptance criteria exist, ask the user: "This change doesn't have acceptance criteria yet. Would you like me to help you add some?"
 - If the user agrees, work with them to define clear, testable criteria
 
-### 2. Scan the Codebase
+### 2. Ask Clarifying Questions
+
+After reviewing the change details, **ask the user questions** if the description is vague or lacks sufficient context:
+
+- What is the specific goal or problem this change addresses?
+- Who are the users affected by this change?
+- What is the expected behavior or outcome?
+- Are there any constraints, edge cases, or non-requirements?
+- Do you have examples, mockups, or reference implementations?
+- What does "done" look like for this change?
+
+Don't proceed until you have enough information to create actionable steps.
+
+### 3. Scan the Codebase
 
 Scan the codebase to understand the context:
 - Look at the project structure and relevant files
@@ -25,7 +38,7 @@ Scan the codebase to understand the context:
 
 Add findings to the change body under a "## Context" or "## Implementation Notes" section.
 
-### 3. Create a Checklist
+### 4. Create a Checklist
 
 Based on the acceptance criteria and codebase analysis, create a checklist of implementation steps:
 
@@ -43,14 +56,14 @@ Each step should be:
 - Ordered by dependency (what needs to happen first)
 - Testable when completed
 
-### 4. Identify Dependencies
+### 5. Identify Dependencies
 
 If the change depends on other changes:
 - Run `pebbles list` to see existing changes
 - Identify any blockers or prerequisites
 - Use `pebbles block <change_id> <dependency_id>` to add dependencies if needed
 
-### 5. Update the Change
+### 6. Update the Change
 
 Use `pebbles update` to save all the planning work:
 - Add acceptance criteria (if missing)
@@ -61,7 +74,7 @@ Use `pebbles update` to save all the planning work:
 - Add any notes or questions for clarification
 - Add a log entry: `- YYYY-MM-DD: Planning completed - acceptance criteria and implementation checklist defined`
 
-### 6. Document Relationships (Optional)
+### 7. Document Relationships (Optional)
 
 If this change relates to other commands or workflows, ask the user:
 
