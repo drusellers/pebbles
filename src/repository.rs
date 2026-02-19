@@ -1,8 +1,8 @@
+use crate::db::Db;
+use crate::id::Id;
+use crate::models::{Change, Event, EventType, Status};
 use anyhow::Result;
 use std::path::PathBuf;
-
-use crate::db::Db;
-use crate::models::{Change, Event, EventType, Status};
 
 pub struct ChangeRepository {
     pub db: Db,
@@ -18,11 +18,11 @@ impl ChangeRepository {
         self.db.save().await
     }
 
-    pub fn find_by_id(&self, id: &str) -> Option<&Change> {
+    pub fn find_by_id(&self, id: &Id) -> Option<&Change> {
         self.db.get_change(id)
     }
 
-    pub fn find_by_id_mut(&mut self, id: &str) -> Option<&mut Change> {
+    pub fn find_by_id_mut(&mut self, id: &Id) -> Option<&mut Change> {
         self.db.get_change_mut(id)
     }
 
@@ -36,7 +36,7 @@ impl ChangeRepository {
             serde_json::json!({
                 "title": change.title,
                 "priority": change.priority.to_string(),
-                "parent": change.parent,
+                "parent": change.parent.as_ref().map(|p| p.to_string()),
             }),
         );
         self.db.add_event(event);
@@ -58,7 +58,7 @@ impl ChangeRepository {
 
     pub async fn update_status(
         &mut self,
-        id: &str,
+        id: &Id,
         new_status: Status,
     ) -> Result<&Change> {
         let change = self.db.get_change_mut(id)
@@ -69,7 +69,7 @@ impl ChangeRepository {
         
         // Add event
         let event = Event::new(
-            id.to_string(),
+            id.clone(),
             EventType::StatusChanged,
             serde_json::json!({
                 "from": old_status.to_string(),
@@ -92,7 +92,7 @@ impl ChangeRepository {
         self.db.list_changes(status, priority, changelog, include_done)
     }
 
-    pub fn get_events(&self, change_id: &str) -> Vec<&Event> {
+    pub fn get_events(&self, change_id: &Id) -> Vec<&Event> {
         self.db.get_events_for_change(change_id)
     }
 }

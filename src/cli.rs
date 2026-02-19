@@ -132,7 +132,7 @@ pub struct NewArgs {
 
     /// Parent change ID
     #[arg(long)]
-    pub parent: Option<String>,
+    pub parent: Option<IDish>,
 }
 
 #[derive(Parser)]
@@ -197,7 +197,7 @@ pub struct UpdateArgs {
 
     /// New parent change ID (use empty string to remove parent)
     #[arg(long)]
-    pub parent: Option<String>,
+    pub parent: Option<IDish>,
 }
 
 #[derive(Clone, ValueEnum)]

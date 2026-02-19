@@ -1,25 +1,26 @@
+use crate::id::Id;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Change {
-    pub id: String,
+    pub id: Id,
     pub title: String,
     pub body: String,
     pub status: Status,
     pub priority: Priority,
     pub changelog_type: Option<ChangelogType>,
-    pub parent: Option<String>,
-    pub children: Vec<String>,
-    pub dependencies: Vec<String>,
+    pub parent: Option<Id>,
+    pub children: Vec<Id>,
+    pub dependencies: Vec<Id>,
     pub tags: Vec<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
 
 impl Change {
-    pub fn new(id: String, title: String, priority: Priority) -> Self {
+    pub fn new(id: Id, title: String, priority: Priority) -> Self {
         let now = Utc::now();
         Self {
             id,
@@ -44,7 +45,7 @@ impl Change {
     }
 
     #[allow(dead_code)]
-    pub fn with_parent(mut self, parent: String) -> Self {
+    pub fn with_parent(mut self, parent: Id) -> Self {
         self.parent = Some(parent);
         self
     }
@@ -71,6 +72,34 @@ impl Change {
 
     pub fn update_changelog_type(&mut self, changelog_type: ChangelogType) {
         self.changelog_type = Some(changelog_type);
+        self.updated_at = Utc::now();
+    }
+
+    #[allow(dead_code)]
+    pub fn update_parent(&mut self, parent: Option<Id>) {
+        self.parent = parent;
+        self.updated_at = Utc::now();
+    }
+
+    #[allow(dead_code)]
+    pub fn add_child(&mut self, child_id: Id) {
+        if !self.children.contains(&child_id) {
+            self.children.push(child_id);
+        }
+        self.updated_at = Utc::now();
+    }
+
+    #[allow(dead_code)]
+    pub fn add_dependency(&mut self, dep_id: Id) {
+        if !self.dependencies.contains(&dep_id) {
+            self.dependencies.push(dep_id);
+        }
+        self.updated_at = Utc::now();
+    }
+
+    #[allow(dead_code)]
+    pub fn remove_dependency(&mut self, dep_id: &Id) {
+        self.dependencies.retain(|id| id != dep_id);
         self.updated_at = Utc::now();
     }
 }
@@ -205,17 +234,17 @@ impl From<crate::cli::ChangelogTypeArg> for ChangelogType {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Event {
-    pub id: String,
-    pub change_id: String,
+    pub id: Id,
+    pub change_id: Id,
     pub event_type: EventType,
     pub data: serde_json::Value,
     pub created_at: DateTime<Utc>,
 }
 
 impl Event {
-    pub fn new(change_id: String, event_type: EventType, data: serde_json::Value) -> Self {
+    pub fn new(change_id: Id, event_type: EventType, data: serde_json::Value) -> Self {
         Self {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: Id::generate(),
             change_id,
             event_type,
             data,

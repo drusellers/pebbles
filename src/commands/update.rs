@@ -1,11 +1,12 @@
-use anyhow::{Context, Result};
-
 use crate::cli::UpdateArgs;
 use crate::commands::{print_success, resolve_id};
 use crate::config::get_db_path;
 use crate::db::Db;
+use crate::id::Id;
+use crate::idish::IDish;
 use crate::models::{Event, EventType, Priority, Status};
 use crate::repository::ChangeRepository;
+use anyhow::{Context, Result};
 
 pub async fn update(args: UpdateArgs) -> Result<()> {
     let db_path = get_db_path()
@@ -13,12 +14,12 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
 
     // Handle ID resolution first
     let full_id = if let Some(id) = args.id {
-        // Resolve IDish to full ID using the db directly
+        // Resolve ID to full ID using the db directly
         let db = Db::open(&db_path).await?;
         id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?
     } else {
         // Use workspace detection
-        resolve_id(None)?
+        resolve_id(None).await?
     };
 
     let mut repo = ChangeRepository::open(db_path).await?;
@@ -144,7 +145,7 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
 
     // Update parent - handle this specially to avoid borrow checker issues
     if let Some(parent) = args.parent {
-        updated = update_parent(&mut repo, &full_id, &parent, &mut events).await? || updated;
+        updated = update_parent(&mut repo, &full_id, parent, &mut events).await? || updated;
     }
 
     // Add all events
@@ -166,8 +167,8 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
 /// Returns true if a change was made
 async fn update_parent(
     repo: &mut ChangeRepository,
-    full_id: &str,
-    parent: &str,
+    full_id: &Id,
+    parent: IDish,
     events: &mut Vec<Event>,
 ) -> Result<bool> {
     // First, gather all the information we need without holding any borrows
@@ -177,7 +178,7 @@ async fn update_parent(
         change.parent.clone()
     };
 
-    if parent.is_empty() {
+    if parent.as_str().is_empty() {
         // Remove parent (unparent the change)
         if old_parent.is_none() {
             return Ok(false); // No change needed
@@ -196,7 +197,7 @@ async fn update_parent(
         }
 
         events.push(Event::new(
-            full_id.to_string(),
+            full_id.clone(),
             EventType::ParentChanged,
             serde_json::json!({
                 "from": old_parent,
@@ -206,8 +207,9 @@ async fn update_parent(
 
         Ok(true)
     } else {
-        // Set new parent
-        let new_parent_id = parent.to_string();
+        // Set new parent - resolve the IDish
+        let new_parent_id = parent.resolve(&repo.db)
+            .map_err(|e| anyhow::anyhow!("Invalid parent ID: {}", e))?;
 
         // Validate parent exists
         if repo.find_by_id(&new_parent_id).is_none() {
@@ -215,7 +217,7 @@ async fn update_parent(
         }
 
         // Prevent self-parenting
-        if new_parent_id == full_id {
+        if new_parent_id == *full_id {
             anyhow::bail!("Cannot set a change as its own parent");
         }
 
@@ -230,10 +232,10 @@ async fn update_parent(
         }
 
         // Remove from old parent if exists
-        if let Some(old_parent_id) = &old_parent {
-            if let Some(old_parent_change) = repo.find_by_id_mut(old_parent_id) {
-                old_parent_change.children.retain(|id| id != full_id);
-            }
+        if let Some(old_parent_id) = &old_parent
+            && let Some(old_parent_change) = repo.find_by_id_mut(old_parent_id)
+        {
+            old_parent_change.children.retain(|id| id != full_id);
         }
 
         // Set new parent
@@ -242,18 +244,18 @@ async fn update_parent(
         }
 
         // Add to new parent's children list
-        if let Some(new_parent) = repo.find_by_id_mut(&new_parent_id) {
-            if !new_parent.children.contains(&full_id.to_string()) {
-                new_parent.children.push(full_id.to_string());
-            }
+        if let Some(new_parent) = repo.find_by_id_mut(&new_parent_id)
+            && !new_parent.children.contains(full_id)
+        {
+            new_parent.children.push(full_id.clone());
         }
 
         events.push(Event::new(
-            full_id.to_string(),
+            full_id.clone(),
             EventType::ParentChanged,
             serde_json::json!({
-                "from": old_parent,
-                "to": new_parent_id,
+                "from": old_parent.as_ref().map(|id| id.to_string()),
+                "to": new_parent_id.to_string(),
             }),
         ));
 
@@ -286,16 +288,16 @@ async fn edit_in_editor(initial: &str, config_path: &std::path::Path) -> Result<
 }
 
 /// Check if setting `child_id`'s parent to `parent_id` would create a cycle
-fn would_create_cycle(child_id: &str, parent_id: &str, db: &crate::db::Db) -> Result<bool> {
+fn would_create_cycle(child_id: &Id, parent_id: &Id, db: &crate::db::Db) -> Result<bool> {
     use std::collections::HashSet;
 
     let mut visited = HashSet::new();
-    let mut current = parent_id.to_string();
+    let mut current = parent_id.clone();
 
     // Walk up the parent chain from the proposed parent
     // If we encounter child_id, it would create a cycle
     loop {
-        if current == child_id {
+        if current == *child_id {
             return Ok(true); // Cycle detected
         }
 

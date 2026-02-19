@@ -1,11 +1,11 @@
-use anyhow::{Context, Result};
-use rand::{thread_rng, Rng};
-
 use crate::cli::NewArgs;
 use crate::commands::{print_info, print_success};
-use crate::config::{get_db_path, get_config_path};
+use crate::config::{get_config_path, get_db_path};
+use crate::id::Id;
 use crate::models::{Change, Priority};
 use crate::repository::ChangeRepository;
+use anyhow::{Context, Result};
+use rand::{thread_rng, Rng};
 
 const ALPHANUMERIC: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
 
@@ -35,7 +35,9 @@ pub async fn new(args: NewArgs) -> Result<()> {
     
     // Set parent if provided
     if let Some(parent) = args.parent {
-        change.parent = Some(parent);
+        let parent_id = parent.resolve(&repo.db)
+            .map_err(|e| anyhow::anyhow!("Invalid parent ID: {}", e))?;
+        change.parent = Some(parent_id);
     }
     
     // Handle body
@@ -68,9 +70,9 @@ fn generate_id() -> String {
         .collect()
 }
 
-async fn generate_unique_id(repo: &ChangeRepository) -> Result<String> {
+async fn generate_unique_id(repo: &ChangeRepository) -> Result<Id> {
     for _ in 0..100 {
-        let id = generate_id();
+        let id = Id::new(&generate_id()).map_err(|e| anyhow::anyhow!("Failed to generate ID: {}", e))?;
         if repo.find_by_id(&id).is_none() {
             return Ok(id);
         }

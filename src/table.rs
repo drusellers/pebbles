@@ -1,3 +1,5 @@
+#![allow(clippy::inherent_to_string, dead_code)]
+
 pub struct SimpleTable {
     headers: Vec<String>,
     rows: Vec<Vec<String>>,

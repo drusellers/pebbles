@@ -1,9 +1,8 @@
-use anyhow::{Context, Result};
-
 use crate::commands::print_success;
 use crate::config::get_db_path;
 use crate::db::Db;
 use crate::idish::IDish;
+use anyhow::{Context, Result};
 
 pub async fn delete(id: IDish, force: bool) -> Result<()> {
     let db_path = get_db_path()
@@ -11,7 +10,7 @@ pub async fn delete(id: IDish, force: bool) -> Result<()> {
 
     let mut db = Db::open(&db_path).await?;
 
-    // Resolve IDish to full ID
+    // Resolve ID to full ID
     let full_id = id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
 
     // Check if change exists

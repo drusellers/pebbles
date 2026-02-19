@@ -1,13 +1,13 @@
+use crate::id::Id;
+use crate::models::{Change, Event};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use crate::models::{Change, Event};
-
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Database {
-    pub changes: HashMap<String, Change>,
+    pub changes: HashMap<Id, Change>,
     pub events: Vec<Event>,
 }
 
@@ -53,11 +53,11 @@ impl Db {
         Ok(())
     }
 
-    pub fn get_change(&self, id: &str) -> Option<&Change> {
+    pub fn get_change(&self, id: &Id) -> Option<&Change> {
         self.data.changes.get(id)
     }
 
-    pub fn get_change_mut(&mut self, id: &str) -> Option<&mut Change> {
+    pub fn get_change_mut(&mut self, id: &Id) -> Option<&mut Change> {
         self.data.changes.get_mut(id)
     }
 
@@ -114,14 +114,14 @@ impl Db {
         changes
     }
 
-    pub fn get_events_for_change(&self, change_id: &str) -> Vec<&Event> {
+    pub fn get_events_for_change(&self, change_id: &Id) -> Vec<&Event> {
         self.data.events
             .iter()
-            .filter(|e| e.change_id == change_id)
+            .filter(|e| e.change_id == *change_id)
             .collect()
     }
 
-    pub fn delete_change(&mut self, id: &str) -> Result<()> {
+    pub fn delete_change(&mut self, id: &Id) -> Result<()> {
         if !self.data.changes.contains_key(id) {
             anyhow::bail!("Change with ID '{}' not found", id);
         }
@@ -154,7 +154,7 @@ mod tests {
     fn create_test_change(id: &str, title: &str) -> Change {
         let now = Utc::now();
         Change {
-            id: id.to_string(),
+            id: Id::new(id).expect("Invalid test ID"),
             title: title.to_string(),
             body: String::new(),
             status: Status::Draft,
@@ -192,9 +192,9 @@ mod tests {
     #[test]
     fn test_find_by_prefix_case_insensitive() {
         let mut db = Database::default();
-        db.changes.insert("abc1".to_string(), create_test_change("abc1", "Change 1"));
-        db.changes.insert("abc2".to_string(), create_test_change("abc2", "Change 2"));
-        db.changes.insert("def1".to_string(), create_test_change("def1", "Change 3"));
+        db.changes.insert(Id::new("abc1").unwrap(), create_test_change("abc1", "Change 1"));
+        db.changes.insert(Id::new("abc2").unwrap(), create_test_change("abc2", "Change 2"));
+        db.changes.insert(Id::new("def1").unwrap(), create_test_change("def1", "Change 3"));
 
         let db_wrapper = Db {
             path: PathBuf::from("/tmp/test"),
@@ -225,9 +225,9 @@ mod tests {
     #[test]
     fn test_find_by_prefix_single_char() {
         let mut db = Database::default();
-        db.changes.insert("abc1".to_string(), create_test_change("abc1", "Change 1"));
-        db.changes.insert("abc2".to_string(), create_test_change("abc2", "Change 2"));
-        db.changes.insert("def1".to_string(), create_test_change("def1", "Change 3"));
+        db.changes.insert(Id::new("abc1").unwrap(), create_test_change("abc1", "Change 1"));
+        db.changes.insert(Id::new("abc2").unwrap(), create_test_change("abc2", "Change 2"));
+        db.changes.insert(Id::new("def1").unwrap(), create_test_change("def1", "Change 3"));
 
         let db_wrapper = Db {
             path: PathBuf::from("/tmp/test"),
@@ -245,7 +245,7 @@ mod tests {
     #[test]
     fn test_delete_change() {
         let mut db = Database::default();
-        db.changes.insert("abc1".to_string(), create_test_change("abc1", "Change 1"));
+        db.changes.insert(Id::new("abc1").unwrap(), create_test_change("abc1", "Change 1"));
 
         let mut db_wrapper = Db {
             path: PathBuf::from("/tmp/test"),
@@ -253,10 +253,10 @@ mod tests {
         };
 
         // Should delete existing change
-        assert!(db_wrapper.delete_change("abc1").is_ok());
-        assert!(db_wrapper.get_change("abc1").is_none());
+        assert!(db_wrapper.delete_change(&Id::new("abc1").unwrap()).is_ok());
+        assert!(db_wrapper.get_change(&Id::new("abc1").unwrap()).is_none());
 
         // Should error when deleting non-existent change
-        assert!(db_wrapper.delete_change("xyz9").is_err());
+        assert!(db_wrapper.delete_change(&Id::new("xyz9").unwrap()).is_err());
     }
 }

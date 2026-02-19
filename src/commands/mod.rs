@@ -1,3 +1,5 @@
+use crate::id::Id;
+use crate::idish::IDish;
 use anyhow::Result;
 use colored::Colorize;
 
@@ -35,9 +37,16 @@ pub use delete::delete;
 
 /// Resolve change ID from either explicit argument or current workspace.
 /// This function handles the case where the user provides an IDish or is in a workspace.
-fn resolve_id(id: Option<crate::idish::IDish>) -> Result<String> {
+pub async fn resolve_id(id: Option<IDish>) -> Result<Id> {
+    use crate::db::Db;
+    
     match id {
-        Some(id) => Ok(id.as_str().to_string()),
+        Some(idish) => {
+            let db_path = crate::config::get_db_path()
+                .ok_or_else(|| anyhow::anyhow!("Not in a pebbles repository. Run 'pebbles init' first."))?;
+            let db = Db::open(&db_path).await?;
+            idish.resolve(&db).map_err(|e| anyhow::anyhow!(e))
+        }
         None => {
             // Try to detect current workspace
             if let Some(vcs) = crate::vcs::detect_vcs()
@@ -67,8 +76,8 @@ fn resolve_id(id: Option<crate::idish::IDish>) -> Result<String> {
                     
                     if !workspaces.is_empty() {
                         msg.push_str("\n\nAvailable workspaces:\n");
-                        for ws in workspaces {
-                            msg.push_str(&format!("  ws-{}\n", ws));
+                        for ws in &workspaces {
+                            msg.push_str(&format!("  ws-{ws}\n"));
                         }
                         msg.push_str("\nRun 'pebbles start --isolate <id>' to create a new workspace.");
                     } else {
@@ -91,8 +100,6 @@ fn print_success(msg: &str) {
 fn print_info(msg: &str) {
     println!("{} {}", "→".blue(), msg);
 }
-
-
 
 /// Calculate the shortest unique prefix length for an ID among all other IDs.
 /// Returns the minimum number of characters needed to uniquely identify this ID.

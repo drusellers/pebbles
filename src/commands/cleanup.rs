@@ -1,10 +1,9 @@
-use anyhow::{Context, Result};
-
 use crate::commands::{print_success, resolve_id};
 use crate::config::get_db_path;
 use crate::db::Db;
 use crate::idish::IDish;
 use crate::vcs::detect_vcs;
+use anyhow::{Context, Result};
 
 pub async fn cleanup(id: Option<IDish>) -> Result<()> {
     let db_path = get_db_path()
@@ -12,12 +11,12 @@ pub async fn cleanup(id: Option<IDish>) -> Result<()> {
 
     // Handle ID resolution first
     let full_id = if let Some(id) = id {
-        // Resolve IDish to full ID using the db directly
+        // Resolve ID to full ID using the db directly
         let db = Db::open(&db_path).await?;
         id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?
     } else {
         // Use workspace detection
-        resolve_id(None)?
+        resolve_id(None).await?
     };
 
     let repo = crate::repository::ChangeRepository::open(db_path).await?;

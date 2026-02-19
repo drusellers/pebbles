@@ -1,12 +1,12 @@
-use anyhow::{Context, Result};
-use colored::Colorize;
-use std::collections::{HashMap, HashSet};
-
 use crate::cli::ListArgs;
 use crate::config::get_db_path;
+use crate::id::Id;
 use crate::models::{Change, Status};
 use crate::repository::ChangeRepository;
 use crate::table::SimpleTable;
+use anyhow::{Context, Result};
+use colored::Colorize;
+use std::collections::{HashMap, HashSet};
 
 pub async fn list(args: ListArgs) -> Result<()> {
     let db_path = get_db_path()
@@ -26,7 +26,7 @@ pub async fn list(args: ListArgs) -> Result<()> {
     }
 
     // Calculate unique prefixes for IDs (like jj)
-    let ids: Vec<String> = changes.iter().map(|c| c.id.clone()).collect();
+    let ids: Vec<Id> = changes.iter().map(|c| c.id.clone()).collect();
     let id_prefixes = calculate_unique_prefixes(&ids);
 
     if args.flat {
@@ -42,7 +42,7 @@ pub async fn list(args: ListArgs) -> Result<()> {
 
 fn render_flat_list(
     mut changes: Vec<&Change>,
-    id_prefixes: &HashMap<String, usize>,
+    id_prefixes: &HashMap<Id, usize>,
     args: &ListArgs,
 ) -> Result<()> {
     // Sort
@@ -84,15 +84,15 @@ fn render_flat_list(
 
 fn render_tree_view(
     changes: Vec<&Change>,
-    id_prefixes: &HashMap<String, usize>,
+    id_prefixes: &HashMap<Id, usize>,
     args: &ListArgs,
 ) -> Result<()> {
     // Create a map of ID -> change for quick lookup (needed for completion counts)
-    let change_map: HashMap<String, &Change> =
+    let change_map: HashMap<Id, &Change> =
         changes.iter().map(|c| (c.id.clone(), *c)).collect();
 
     // Build tree structure
-    let tree = build_tree_structure(&changes, args)?;
+    let tree = build_tree_structure(&changes, &change_map, args)?;
 
     // Create borderless table
     let mut table = SimpleTable::borderless(vec![
@@ -151,14 +151,11 @@ struct TreeNode<'a> {
 /// Build tree structure from flat list of changes
 fn build_tree_structure<'a>(
     changes: &[&'a Change],
+    change_map: &HashMap<Id, &'a Change>,
     args: &ListArgs,
 ) -> Result<Vec<TreeNode<'a>>> {
     let mut result = Vec::new();
     let mut visited = HashSet::new();
-
-    // Create a map of ID -> change for quick lookup
-    let change_map: HashMap<String, &'a Change> =
-        changes.iter().map(|c| (c.id.clone(), *c)).collect();
 
     // Find root items (no parent, or parent not in the filtered list)
     let mut roots: Vec<&'a Change> = changes
@@ -179,10 +176,10 @@ fn build_tree_structure<'a>(
     for (i, root) in roots.iter().enumerate() {
         let is_last = i == roots.len() - 1;
         add_node_recursive(
-            *root,
+            root,
             0,
             is_last,
-            &change_map,
+            change_map,
             &mut result,
             &mut visited,
             args,
@@ -209,9 +206,9 @@ fn add_node_recursive<'a>(
     change: &'a Change,
     depth: usize,
     is_last: bool,
-    change_map: &HashMap<String, &'a Change>,
+    change_map: &HashMap<Id, &'a Change>,
     result: &mut Vec<TreeNode<'a>>,
-    visited: &mut HashSet<String>,
+    visited: &mut HashSet<Id>,
     args: &ListArgs,
 ) {
     if visited.contains(&change.id) {
@@ -241,7 +238,7 @@ fn add_node_recursive<'a>(
     for (i, child) in sorted_children.iter().enumerate() {
         let child_is_last = i == sorted_children.len() - 1;
         add_node_recursive(
-            *child,
+            child,
             depth + 1,
             child_is_last,
             change_map,
@@ -252,7 +249,7 @@ fn add_node_recursive<'a>(
     }
 }
 
-fn sort_changes<'a>(changes: &mut Vec<&'a Change>, sort_by: &str, reverse: bool) {
+fn sort_changes(changes: &mut Vec<&Change>, sort_by: &str, reverse: bool) {
     changes.sort_by(|a, b| {
         let cmp = match sort_by {
             "created" => a.created_at.cmp(&b.created_at),
@@ -287,14 +284,14 @@ fn build_tree_prefix(depth: usize, is_last: bool) -> String {
     prefix
 }
 
-fn format_change_row(change: &Change, id_prefixes: &HashMap<String, usize>) -> Vec<String> {
+fn format_change_row(change: &Change, id_prefixes: &HashMap<Id, usize>) -> Vec<String> {
     let status_str = format_status(&change.status.to_string());
     let priority_str = format_priority(&change.priority.to_string());
     let changelog_str = change
         .changelog_type
         .as_ref()
         .map(|ct| format_changelog_abbrev(&ct.to_string()))
-        .unwrap_or_else(|| "".to_string());
+        .unwrap_or_default();
     let age = format_age(&change.created_at);
 
     // Truncate title if too long
@@ -309,7 +306,7 @@ fn format_change_row(change: &Change, id_prefixes: &HashMap<String, usize>) -> V
         .get(&change.id)
         .copied()
         .unwrap_or(change.id.len());
-    let formatted_id = format_id_with_prefix(&change.id, prefix_len);
+    let formatted_id = format_id_with_prefix(&change.id.to_string(), prefix_len);
 
     vec![
         formatted_id,
@@ -387,19 +384,21 @@ fn format_age(datetime: &chrono::DateTime<chrono::Utc>) -> String {
 
 /// Calculate the unique prefix length for each ID
 /// Returns a map of ID -> prefix length needed to be unique
-fn calculate_unique_prefixes(ids: &[String]) -> HashMap<String, usize> {
+fn calculate_unique_prefixes(ids: &[Id]) -> HashMap<Id, usize> {
     let mut result = HashMap::new();
+        let id_strings: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
 
     for id in ids {
+        let id_str = id.as_str();
         // Find the minimum prefix length that makes this ID unique
         let mut prefix_len = 1;
-        'outer: while prefix_len <= id.len() {
-            let prefix = &id[..prefix_len];
+        'outer: while prefix_len <= id_str.len() {
+            let prefix = &id_str[..prefix_len];
 
             // Check if this prefix is unique
-            let conflicts: Vec<&String> = ids
+            let conflicts: Vec<&String> = id_strings
                 .iter()
-                .filter(|other| other.starts_with(prefix) && *other != id)
+                .filter(|other| other.starts_with(prefix) && *other != id_str)
                 .collect();
 
             if conflicts.is_empty() {
@@ -436,13 +435,13 @@ mod tests {
 
     fn create_test_change(id: &str, parent: Option<&str>, title: &str) -> Change {
         Change {
-            id: id.to_string(),
+            id: ID::new(id),
             title: title.to_string(),
             body: "".to_string(),
             status: Status::Draft,
             priority: crate::models::Priority::Medium,
             changelog_type: None,
-            parent: parent.map(|p| p.to_string()),
+            parent: parent.map(|p| ID::new(p)),
             children: Vec::new(),
             dependencies: Vec::new(),
             tags: Vec::new(),
@@ -462,18 +461,18 @@ mod tests {
     #[test]
     fn test_calculate_unique_prefixes() {
         let ids = vec![
-            "abc1".to_string(),
-            "abc2".to_string(),
-            "def3".to_string(),
+            ID::new("abc1"),
+            ID::new("abc2"),
+            ID::new("def3"),
         ];
 
         let prefixes = calculate_unique_prefixes(&ids);
 
         // "abc1" and "abc2" share prefix "abc", so need 4 chars to be unique
-        assert_eq!(prefixes.get("abc1").unwrap(), &4);
-        assert_eq!(prefixes.get("abc2").unwrap(), &4);
+        assert_eq!(prefixes.get(&ID::new("abc1")).unwrap(), &4);
+        assert_eq!(prefixes.get(&ID::new("abc2")).unwrap(), &4);
         // "def3" is unique with just "d"
-        assert_eq!(prefixes.get("def3").unwrap(), &1);
+        assert_eq!(prefixes.get(&ID::new("def3")).unwrap(), &1);
     }
 
     #[test]

@@ -1,8 +1,8 @@
+use super::{run_cmd, Vcs};
+use crate::id::Id;
 use anyhow::Result;
 use std::path::Path;
 use std::process::Command;
-
-use super::{run_cmd, Vcs};
 
 pub struct Git;
 
@@ -26,8 +26,8 @@ impl Vcs for Git {
         }
     }
 
-    fn create_workspace(&self, name: &str) -> Result<std::path::PathBuf> {
-        let workspace_path = std::env::current_dir()?.join(format!("ws-{}", name));
+    fn create_workspace(&self, id: &Id) -> Result<std::path::PathBuf> {
+        let workspace_path = std::env::current_dir()?.join(format!("ws-{}", id));
 
         // Check if already exists
         if workspace_path.exists() {
@@ -35,7 +35,7 @@ impl Vcs for Git {
         }
 
         // Create worktree
-        let branch_name = format!("pebbles/{}", name);
+        let branch_name = format!("pebbles/{}", id);
 
         // Create branch if it doesn't exist
         let _ = Command::new("git").args(["branch", &branch_name]).output();
@@ -51,11 +51,11 @@ impl Vcs for Git {
         Ok(workspace_path)
     }
 
-    fn cleanup_workspace(&self, name: &str) -> Result<()> {
-        let workspace_path = std::env::current_dir()?.join(format!("ws-{}", name));
+    fn cleanup_workspace(&self, id: &Id) -> Result<()> {
+        let workspace_path = std::env::current_dir()?.join(format!("ws-{}", id));
 
         if !workspace_path.exists() {
-            anyhow::bail!("Workspace 'ws-{}' does not exist", name);
+            anyhow::bail!("Workspace 'ws-{}' does not exist", id);
         }
 
         // Remove worktree
@@ -66,7 +66,7 @@ impl Vcs for Git {
         ]))?;
 
         // Remove branch
-        let branch_name = format!("pebbles/{}", name);
+        let branch_name = format!("pebbles/{}", id);
         let _ = Command::new("git")
             .args(["branch", "-D", &branch_name])
             .output();
@@ -79,11 +79,11 @@ impl Vcs for Git {
         Ok(format!("{}\n\nImplemented change", title))
     }
 
-    fn current_workspace_id(&self) -> Option<String> {
+    fn current_workspace_id(&self) -> Option<Id> {
         let current_dir = std::env::current_dir().ok()?;
         let dir_name = current_dir.file_name()?.to_str()?;
 
-        dir_name.strip_prefix("ws-").map(|s| s.to_string())
+        dir_name.strip_prefix("ws-").map(|s| Id::new(s).ok()).flatten()
     }
 
     fn commit(&self, message: &str) -> Result<()> {

@@ -1,82 +1,18 @@
 {
   "changes": {
-    "6vt4": {
-      "id": "6vt4",
-      "title": "add ls alias to list",
-      "body": "## Implementation\n\nAdded `ls` as a visible alias for the `list` command in src/cli.rs.\n\n## Log\n- 2026-02-18: Added `#[command(visible_alias = \"ls\")]` to List variant",
-      "status": "done",
-      "priority": "medium",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T22:40:24.940070Z",
-      "updated_at": "2026-02-18T22:49:04.754953Z"
-    },
-    "hag1": {
-      "id": "hag1",
-      "title": "id's should use a strong type ID, rather than String and &str",
-      "body": "Update the AGENTS.md file with this concept too.\n\nWhenever possible we want to create strong types for ID's in our system. So a vector of child ids should be a vector of ID (Vec<ID>)\n\n",
+    "2myi": {
+      "id": "2myi",
+      "title": "Add intake command",
+      "body": "Add an intake command that can read a file or STDIN - processes the text, and creates issues.\n\n\n```sh\ncat SOME_FILE.txt | pebbles intake\n```\n\n```sh\npebbles intake \"./path/to/file.txt\" \n```\n\nWe need a new command `/intake` that gives the llm instructions to read text and create issues",
       "status": "draft",
       "priority": "medium",
+      "changelog_type": null,
       "parent": null,
       "children": [],
       "dependencies": [],
       "tags": [],
-      "created_at": "2026-02-19T14:15:35.689496Z",
-      "updated_at": "2026-02-19T14:15:35.689496Z"
-    },
-    "oija": {
-      "id": "oija",
-      "title": "Add output feedback to opencode run command",
-      "body": "\n## Goal\nAdd output feedback to the 'pebbles start' command so users know when opencode is working.\n\n## Acceptance Criteria\n- [x] Add --print-logs flag to pebbles start command\n- [x] --print-logs flag passes through to opencode run command\n- [x] On non-Unix systems, stdout/stderr is inherited when --print-logs is set\n\n## Implementation Notes\n\nAdded a new --print-logs flag to the 'pebbles start' command:\n\n### Changes Made:\n1. **src/cli.rs:52-54** - Added --print-logs flag to Start command with help text\n2. **src/main.rs:27,34** - Updated Start command handler to pass print_logs parameter\n3. **src/commands/start.rs:13,78-80,84,89-101** - \n   - Updated function signature to accept print_logs parameter\n   - Pass --print-logs to opencode when flag is set\n   - On non-Unix systems, inherit stdout/stderr when flag is set\n\n### Usage:\n```\npebbles start <id> --print-logs\n```\n\nThis will show opencode's output/logs to the console instead of running silently.\n\n## Log\n- 2026-02-19: Added --print-logs flag to pebbles start command\n",
-      "status": "done",
-      "priority": "high",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T22:49:43.672257Z",
-      "updated_at": "2026-02-19T13:35:13.125266Z"
-    },
-    "2p4t": {
-      "id": "2p4t",
-      "title": "abc",
-      "body": "\n## Implementation Notes\n\nImplemented unique prefix highlighting for change IDs in the 'pebbles show' command.\n\n### Changes Made:\n1. Added 'unique_prefix_len()' function in src/commands/mod.rs:74 to calculate the minimum prefix length needed to uniquely identify a change ID among all others\n2. Added 'format_id_with_unique_prefix()' function in src/commands/mod.rs:96 to format the ID with the unique prefix in bold cyan and the rest dimmed\n3. Updated 'show' command in src/commands/show.rs:20-26 to use the new formatting\n\n### Technical Details:\n- The unique prefix is calculated by comparing the target ID against all other change IDs\n- The shortest prefix that makes the ID unique is highlighted\n- Format: unique prefix in bold cyan, remaining characters dimmed\n- Example: If change '2p4t' is the only one starting with '2', it will display as **2**p4t (with '2' bold and 'p4t' dimmed)\n\n## Log\n- 2026-02-18: Implemented unique prefix highlighting for change IDs\n",
-      "status": "done",
-      "priority": "medium",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T21:06:10.592887Z",
-      "updated_at": "2026-02-18T21:14:31.428830Z"
-    },
-    "fq24": {
-      "id": "fq24",
-      "title": "abcd",
-      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
-      "status": "done",
-      "priority": "medium",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T21:06:18.410303Z",
-      "updated_at": "2026-02-18T22:28:08.567409Z"
-    },
-    "hoy9": {
-      "id": "hoy9",
-      "title": "Add support for issues with dependencies",
-      "body": "Docket would call these epics, not the world's biggest fan of epic, but we want to track the idea of dependencies between issues and also show that in the list view. This means the list view is going to need a tree mode. so the \"list\" view should probably not draw boxes around everything - the table code should not have borders but still help us control the output (i.e. the width.)",
-      "status": "draft",
-      "priority": "medium",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-18T22:37:31.482437Z",
-      "updated_at": "2026-02-18T22:37:31.482437Z"
+      "created_at": "2026-02-19T14:35:55.986061Z",
+      "updated_at": "2026-02-19T14:35:55.986061Z"
     },
     "0zu0": {
       "id": "0zu0",
@@ -84,12 +20,125 @@
       "body": "The idea of the plan command is to enrich an existing issue.\n\n1. open and read the issue\n2. it's assumed that this issue may not be well thought out yet\n3. ask the user any questions you have, and then update the issue with your thoughts.\n4. if it seems like a multistep issue, create the needed child issues\n",
       "status": "draft",
       "priority": "medium",
+      "changelog_type": null,
       "parent": null,
       "children": [],
       "dependencies": [],
       "tags": [],
       "created_at": "2026-02-18T22:40:38.651291Z",
       "updated_at": "2026-02-19T13:55:43.656485Z"
+    },
+    "q9ha": {
+      "id": "q9ha",
+      "title": "isolate doesn't make a sibling directory, it makes a child directory",
+      "body": "",
+      "status": "draft",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-19T14:41:37.673133Z",
+      "updated_at": "2026-02-19T14:41:37.673133Z"
+    },
+    "fq24": {
+      "id": "fq24",
+      "title": "abcd",
+      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:18.410303Z",
+      "updated_at": "2026-02-18T22:28:08.567409Z"
+    },
+    "lx24": {
+      "id": "lx24",
+      "title": "id prefix doesn't include complete items",
+      "body": "❯ pbd ls\n╭────────────────────────────────────────────────────────────────────────────────────────────────────╮\n│ ID   │ Status      │ Priority │ Age │ Title                                                        │\n├──────┼─────────────┼──────────┼─────┼──────────────────────────────────────────────────────────────┤\n│ hoy9 │ draft       │ medium   │ 16h │ Add support for issues with dependencies                     │\n├──────┼─────────────┼──────────┼─────┼──────────────────────────────────────────────────────────────┤\n│ 0zu0 │ draft       │ medium   │ 15h │ add plan command                                             │\n├──────┼─────────────┼──────────┼─────┼──────────────────────────────────────────────────────────────┤\n│ hag1 │ in_progress │ medium   │ 21m │ id's should use a strong type ID, rather than String and ... │\n├──────┼─────────────┼──────────┼─────┼──────────────────────────────────────────────────────────────┤\n│ 2myi │ draft       │ medium   │ 1m  │ Add intake command                                           │\n╰────────────────────────────────────────────────────────────────────────────────────────────────────╯\n\npebbles on  HEAD (68076ac) [!] is 📦 v0.1.0 via 🦀 v1.93.0\n❯ pbd approve 2\nError: ID prefix '2' is ambiguous\nhint: Candidates are: 2p4t, 2myi\n\n\nIt looks like our id prefix highlight doesn't inculde completed items",
+      "status": "in_progress",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-19T14:39:16.189076Z",
+      "updated_at": "2026-02-19T14:39:57.152334Z"
+    },
+    "hag1": {
+      "id": "hag1",
+      "title": "id's should use a strong type ID, rather than String and &str",
+      "body": "\n\n## Implementation\n\nSuccessfully implemented strong ID types throughout the codebase.\n\n### Changes Made:\n1. Created a proper `ID` type in `src/idish.rs` with:\n   - `#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]`\n   - `Deref`, `AsRef`, `Display`, `From`, and `FromStr` implementations\n   - `resolve()` method for prefix matching against the database\n   - Helper methods like `to_lowercase()` for case-insensitive operations\n\n2. Updated `src/models.rs`:\n   - Changed `Change.id` from `String` to `ID`\n   - Changed `Change.parent` from `Option<String>` to `Option<ID>`\n   - Changed `Change.children` from `Vec<String>` to `Vec<ID>`\n   - Changed `Change.dependencies` from `Vec<String>` to `Vec<ID>`\n   - Changed `Event.id` and `Event.change_id` from `String` to `ID`\n   - Updated `Change::new()`, `Event::new()`, and other methods to use `ID`\n\n3. Updated `src/db.rs`:\n   - Changed `Database.changes` from `HashMap<String, Change>` to `HashMap<ID, Change>`\n   - Updated all method signatures to use `&ID` instead of `&str`\n   - Updated test functions to create changes with `ID` types\n\n4. Updated `src/repository.rs`:\n   - Updated all method signatures to use `&ID`\n   - Fixed Event creation to use `ID` instead of cloning strings\n\n5. Updated `src/cli.rs`:\n   - Changed all CLI arguments from `IDish` to `ID`\n   - Updated `parent` arguments to accept `String` (parsed into `ID` later)\n\n6. Updated all command files (show, update, approve, done, delete, log, cleanup, edit, start, new, current):\n   - Updated to use `ID` instead of `IDish` or `String`\n   - Updated `resolve_id()` to return `Result<ID>`\n   - Fixed formatting and display of IDs\n\n7. Updated `src/vcs/mod.rs`, `src/vcs/git.rs`, `src/vcs/jujutsu.rs`:\n   - Changed `current_workspace_id()` to return `Option<ID>`\n   - Updated `create_workspace()` and `cleanup_workspace()` to take `&ID`\n\n8. Updated `AGENT.md`:\n   - Added documentation about strong ID types\n   - Added usage examples for the ID type\n\n### Benefits:\n- Type safety: Cannot accidentally mix IDs with other strings\n- Better IDE support with autocomplete and type checking\n- Clearer code intent - you know when something is an ID\n- Consistent API across the codebase\n\n## Log\n- 2026-02-19: Implemented strong ID type throughout the codebase\n- 2026-02-19: Updated all models, database, repository, and commands to use ID type\n- 2026-02-19: Updated AGENT.md with ID type conventions\n- 2026-02-19: All tests pass, clippy clean\n",
+      "status": "in_progress",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-19T14:15:35.689496Z",
+      "updated_at": "2026-02-19T14:45:28.277147Z"
+    },
+    "hoy9": {
+      "id": "hoy9",
+      "title": "Add support for issues with dependencies",
+      "body": "Docket would call these epics, not the world's biggest fan of epic, but we want to track the idea of dependencies between issues and also show that in the list view. This means the list view is going to need a tree mode. so the \"list\" view should probably not draw boxes around everything - the table code should not have borders but still help us control the output (i.e. the width.)",
+      "status": "draft",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:37:31.482437Z",
+      "updated_at": "2026-02-18T22:37:31.482437Z"
+    },
+    "2p4t": {
+      "id": "2p4t",
+      "title": "abc",
+      "body": "\n## Implementation Notes\n\nImplemented unique prefix highlighting for change IDs in the 'pebbles show' command.\n\n### Changes Made:\n1. Added 'unique_prefix_len()' function in src/commands/mod.rs:74 to calculate the minimum prefix length needed to uniquely identify a change ID among all others\n2. Added 'format_id_with_unique_prefix()' function in src/commands/mod.rs:96 to format the ID with the unique prefix in bold cyan and the rest dimmed\n3. Updated 'show' command in src/commands/show.rs:20-26 to use the new formatting\n\n### Technical Details:\n- The unique prefix is calculated by comparing the target ID against all other change IDs\n- The shortest prefix that makes the ID unique is highlighted\n- Format: unique prefix in bold cyan, remaining characters dimmed\n- Example: If change '2p4t' is the only one starting with '2', it will display as **2**p4t (with '2' bold and 'p4t' dimmed)\n\n## Log\n- 2026-02-18: Implemented unique prefix highlighting for change IDs\n",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:10.592887Z",
+      "updated_at": "2026-02-18T21:14:31.428830Z"
+    },
+    "6vt4": {
+      "id": "6vt4",
+      "title": "add ls alias to list",
+      "body": "## Implementation\n\nAdded `ls` as a visible alias for the `list` command in src/cli.rs.\n\n## Log\n- 2026-02-18: Added `#[command(visible_alias = \"ls\")]` to List variant",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:40:24.940070Z",
+      "updated_at": "2026-02-18T22:49:04.754953Z"
+    },
+    "oija": {
+      "id": "oija",
+      "title": "Add output feedback to opencode run command",
+      "body": "\n## Goal\nAdd output feedback to the 'pebbles start' command so users know when opencode is working.\n\n## Acceptance Criteria\n- [x] Add --print-logs flag to pebbles start command\n- [x] --print-logs flag passes through to opencode run command\n- [x] On non-Unix systems, stdout/stderr is inherited when --print-logs is set\n\n## Implementation Notes\n\nAdded a new --print-logs flag to the 'pebbles start' command:\n\n### Changes Made:\n1. **src/cli.rs:52-54** - Added --print-logs flag to Start command with help text\n2. **src/main.rs:27,34** - Updated Start command handler to pass print_logs parameter\n3. **src/commands/start.rs:13,78-80,84,89-101** - \n   - Updated function signature to accept print_logs parameter\n   - Pass --print-logs to opencode when flag is set\n   - On non-Unix systems, inherit stdout/stderr when flag is set\n\n### Usage:\n```\npebbles start <id> --print-logs\n```\n\nThis will show opencode's output/logs to the console instead of running silently.\n\n## Log\n- 2026-02-19: Added --print-logs flag to pebbles start command\n",
+      "status": "done",
+      "priority": "high",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:49:43.672257Z",
+      "updated_at": "2026-02-19T13:35:13.125266Z"
     }
   },
   "events": [
@@ -398,6 +447,88 @@
         "title": "id's should use a strong type ID, rather than String and &str"
       },
       "created_at": "2026-02-19T14:16:29.868127Z"
+    },
+    {
+      "id": "ebf837b9-7033-4d1e-a38b-a35004b7cea4",
+      "change_id": "hag1",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-19T14:28:58.976665Z"
+    },
+    {
+      "id": "990cda71-6507-430a-aad4-b8193e5eef04",
+      "change_id": "hag1",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-19T14:29:05.090810Z"
+    },
+    {
+      "id": "b8b9a439-c2f6-49fd-86c7-a7a451a2163e",
+      "change_id": "2myi",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "Add intake command"
+      },
+      "created_at": "2026-02-19T14:37:31.214991Z"
+    },
+    {
+      "id": "7cadd74b-7bb6-4bd4-8c69-c3566c2f8040",
+      "change_id": "lx24",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "id prefix doesn't include complete items"
+      },
+      "created_at": "2026-02-19T14:39:41.338075Z"
+    },
+    {
+      "id": "024252ea-5b00-4b98-b46d-eabcf5bc9f73",
+      "change_id": "lx24",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-19T14:39:50.523441Z"
+    },
+    {
+      "id": "7c06cb0f-c626-433c-a73f-5e7d57c0ef3d",
+      "change_id": "lx24",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-19T14:39:57.152343Z"
+    },
+    {
+      "id": "cf7b1cf9-1ab1-49b2-ab72-a6dcbfb18d17",
+      "change_id": "q9ha",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "isolate doesn't make a sibling directory, it makes a child directory"
+      },
+      "created_at": "2026-02-19T14:41:37.673138Z"
+    },
+    {
+      "id": "766eb281-0a6c-4694-8262-33e3c447d929",
+      "change_id": "hag1",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-19T14:45:28.277231Z"
     }
   ]
 }

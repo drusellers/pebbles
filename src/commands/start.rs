@@ -1,7 +1,3 @@
-use anyhow::{Context, Result};
-use std::path::PathBuf;
-use std::process::Command;
-
 use crate::commands::{print_info, print_success};
 use crate::config::{get_config_path, get_db_path, Config};
 use crate::db::Db;
@@ -9,6 +5,9 @@ use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
+use anyhow::{Context, Result};
+use std::path::PathBuf;
+use std::process::Command;
 
 pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_permissions: bool) -> Result<()> {
     let db_path = get_db_path()
@@ -68,7 +67,7 @@ pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_
 
     let mut cmd = Command::new("opencode");
     cmd.current_dir(&work_dir);
-    cmd.env("PEBBLES_CHANGE", &full_id);
+    cmd.env("PEBBLES_CHANGE", full_id.to_string());
     cmd.env("PEBBLES_VCS", vcs.name());
 
     if skip_permissions {

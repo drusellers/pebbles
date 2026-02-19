@@ -1,6 +1,5 @@
-use anyhow::{Context, Result};
-
 use crate::vcs::detect_vcs;
+use anyhow::{Context, Result};
 
 pub async fn current() -> Result<()> {
     let vcs = detect_vcs()

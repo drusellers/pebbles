@@ -1,4 +1,5 @@
 use crate::db::Db;
+use crate::id::Id;
 use std::str::FromStr;
 
 #[derive(Debug, Clone)]
@@ -13,7 +14,7 @@ impl IDish {
     /// - Case-insensitive exact match wins
     /// - Otherwise finds unique prefix match (case-insensitive)
     /// - Returns error if ambiguous or not found
-    pub fn resolve(&self, db: &Db) -> Result<String, IDishError> {
+    pub fn resolve(&self, db: &Db) -> Result<Id, IDishError> {
         let input = self.0.to_lowercase();
 
         // 1. Check for exact match (case-insensitive)
@@ -22,7 +23,7 @@ impl IDish {
         }
 
         // 2. Find prefix matches (case-insensitive)
-        let candidates: Vec<String> = db
+        let candidates: Vec<Id> = db
             .find_by_prefix_case_insensitive(&input)
             .into_iter()
             .map(|c| c.id.clone())
@@ -35,7 +36,7 @@ impl IDish {
             1 => Ok(candidates[0].clone()),
             _ => Err(IDishError::Ambiguous {
                 prefix: self.0.clone(),
-                candidates,
+                candidates: candidates.iter().map(|id| id.to_string()).collect(),
             }),
         }
     }
@@ -89,7 +90,7 @@ mod tests {
         for (id, title) in changes {
             let now = Utc::now();
             let change = Change {
-                id: id.to_string(),
+                id: Id::new(id).unwrap(),
                 title: title.to_string(),
                 body: String::new(),
                 status: Status::Draft,
@@ -102,7 +103,7 @@ mod tests {
                 created_at: now,
                 updated_at: now,
             };
-            db.changes.insert(id.to_string(), change);
+            db.changes.insert(change.id.clone(), change);
         }
         Db {
             path: PathBuf::from("/tmp/test"),
@@ -117,7 +118,7 @@ mod tests {
         let idish = IDish("abc1".to_string());
         let result = idish.resolve(&db);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "abc1");
+        assert_eq!(result.unwrap().as_str(), "abc1");
     }
 
     #[test]
@@ -127,7 +128,7 @@ mod tests {
         let idish = IDish("ABC1".to_string());
         let result = idish.resolve(&db);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "abc1");
+        assert_eq!(result.unwrap().as_str(), "abc1");
     }
 
     #[test]
@@ -138,7 +139,7 @@ mod tests {
         let idish = IDish("ab".to_string());
         let result = idish.resolve(&db);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "abc1");
+        assert_eq!(result.unwrap().as_str(), "abc1");
     }
 
     #[test]
@@ -189,7 +190,7 @@ mod tests {
         let idish = IDish("abc1".to_string());
         let result = idish.resolve(&db);
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "abc1");
+        assert_eq!(result.unwrap().as_str(), "abc1");
     }
 
     #[test]

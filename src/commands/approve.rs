@@ -1,17 +1,16 @@
-use anyhow::{Context, Result};
-
 use crate::commands::print_success;
 use crate::config::get_db_path;
 use crate::db::Db;
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
+use anyhow::{Context, Result};
 
 pub async fn approve(id: IDish) -> Result<()> {
     let db_path = get_db_path()
         .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
 
-    // Resolve IDish to full ID first
+    // Resolve ID to full ID first
     let db = Db::open(&db_path).await?;
     let full_id = id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
 

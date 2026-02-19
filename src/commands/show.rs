@@ -1,11 +1,10 @@
-use anyhow::{Context, Result};
-use colored::Colorize;
-
 use crate::commands::{resolve_id, format_id_with_unique_prefix};
 use crate::config::get_db_path;
 use crate::db::Db;
 use crate::idish::IDish;
 use crate::repository::ChangeRepository;
+use anyhow::{Context, Result};
+use colored::Colorize;
 
 pub async fn show(id: Option<IDish>) -> Result<()> {
     let db_path = get_db_path()
@@ -13,12 +12,12 @@ pub async fn show(id: Option<IDish>) -> Result<()> {
 
     // Handle ID resolution first
     let full_id = if let Some(id) = id {
-        // Resolve IDish to full ID using the db directly
+        // Resolve ID to full ID using the db directly
         let db = Db::open(&db_path).await?;
         id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?
     } else {
         // Use workspace detection
-        resolve_id(None)?
+        resolve_id(None).await?
     };
 
     let repo = ChangeRepository::open(db_path).await?;
@@ -35,7 +34,7 @@ pub async fn show(id: Option<IDish>) -> Result<()> {
     // Print header
     println!("\n{}", "═".repeat(60).dimmed());
     println!("{} {} {}",
-        format_id_with_unique_prefix(&change.id, &all_ids),
+        format_id_with_unique_prefix(change.id.as_str(), &all_ids),
         "─".dimmed(),
         change.title.white().bold()
     );
@@ -55,20 +54,20 @@ pub async fn show(id: Option<IDish>) -> Result<()> {
 
     if let Some(ref parent) = change.parent {
         println!("\n{}", "Parent:".bold());
-        println!("  {}", parent.cyan());
+        println!("  {}", parent.as_str().cyan());
     }
 
     if !change.children.is_empty() {
         println!("\n{}", "Children:".bold());
         for child in &change.children {
-            println!("  {}", child.cyan());
+            println!("  {}", child.as_str().cyan());
         }
     }
 
     if !change.dependencies.is_empty() {
         println!("\n{}", "Dependencies:".bold());
         for dep in &change.dependencies {
-            println!("  {}", dep.cyan());
+            println!("  {}", dep.as_str().cyan());
         }
     }
 
