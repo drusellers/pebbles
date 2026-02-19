@@ -94,6 +94,7 @@ mod tests {
                 body: String::new(),
                 status: Status::Draft,
                 priority: Priority::Medium,
+                changelog_type: None,
                 parent: None,
                 children: Vec::new(),
                 dependencies: Vec::new(),

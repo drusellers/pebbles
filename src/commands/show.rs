@@ -27,7 +27,7 @@ pub async fn show(id: Option<IDish>) -> Result<()> {
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
     // Get all change IDs to calculate unique prefix
-    let all_changes = repo.list(None, None, true);
+    let all_changes = repo.list(None, None, None, true);
     let all_ids: Vec<&str> = all_changes.iter()
         .map(|c| c.id.as_str())
         .collect();
@@ -47,6 +47,11 @@ pub async fn show(id: Option<IDish>) -> Result<()> {
 
     println!("\n{}", "Priority:".bold());
     println!("  {}", format_priority(&change.priority.to_string()));
+
+    if let Some(ref changelog) = change.changelog_type {
+        println!("\n{}", "Changelog:".bold());
+        println!("  {}", format_changelog(&changelog.to_string()));
+    }
 
     if let Some(ref parent) = change.parent {
         println!("\n{}", "Parent:".bold());
@@ -111,5 +116,18 @@ fn format_priority(priority: &str) -> String {
         "high" => priority.yellow().to_string(),
         "critical" => priority.red().bold().to_string(),
         _ => priority.to_string(),
+    }
+}
+
+fn format_changelog(changelog: &str) -> String {
+    match changelog {
+        "feature" => "feature".green().bold().to_string(),
+        "fix" => "fix".red().to_string(),
+        "change" => "change".yellow().to_string(),
+        "deprecated" => "deprecated".dimmed().to_string(),
+        "removed" => "removed".red().bold().to_string(),
+        "security" => "security".red().bold().to_string(),
+        "internal" => "internal".dimmed().to_string(),
+        _ => changelog.to_string(),
     }
 }

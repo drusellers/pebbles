@@ -1,7 +1,8 @@
 use anyhow::{Context, Result};
+use std::path::PathBuf;
 use std::process::Command;
 
-use crate::commands::print_info;
+use crate::commands::{print_info, print_success};
 use crate::config::{get_config_path, get_db_path, Config};
 use crate::db::Db;
 use crate::idish::IDish;
@@ -9,11 +10,10 @@ use crate::models::Status;
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
 
-pub async fn build(id: IDish, skip_permissions: bool) -> Result<()> {
+pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_permissions: bool) -> Result<()> {
     let db_path = get_db_path()
         .context("Not in a pebbles repository. Run 'pebbles init' first.")?;
 
-    // Resolve IDish to full ID first
     let db = Db::open(&db_path).await?;
     let full_id = id.resolve(&db).map_err(|e| anyhow::anyhow!(e))?;
 
@@ -22,7 +22,6 @@ pub async fn build(id: IDish, skip_permissions: bool) -> Result<()> {
     let change = repo.find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
-    // Check status
     match change.status {
         Status::Draft => {
             anyhow::bail!(
@@ -37,7 +36,6 @@ pub async fn build(id: IDish, skip_permissions: bool) -> Result<()> {
         _ => {}
     }
 
-    // Detect VCS (for setting environment variable)
     let config_path = get_config_path().unwrap();
     let config = Config::load(&config_path).await?;
 
@@ -46,16 +44,30 @@ pub async fn build(id: IDish, skip_permissions: bool) -> Result<()> {
 
     print_info(&format!("Using {} for version control", vcs.name()));
 
-    // Update status to InProgress
+    let work_dir: PathBuf = if isolate {
+        let workspace_path = vcs.create_workspace(&full_id)?;
+        print_success(&format!("Created workspace at {}", workspace_path.display()));
+        workspace_path
+    } else {
+        std::env::current_dir()?
+    };
+
     if change.status != Status::InProgress {
         repo.update_status(&full_id, Status::InProgress).await?;
         print_info("Updated status to InProgress");
     }
 
-    // Launch opencode in current directory (no workspace created)
-    print_info(&format!("Launching opencode to work on change '{}' in current directory", full_id));
+    if !wait {
+        print_info(&format!(
+            "Launching opencode to implement change '{}'",
+            full_id
+        ));
+    } else {
+        print_info(&format!("Launching opencode for change '{}'", full_id));
+    }
 
     let mut cmd = Command::new("opencode");
+    cmd.current_dir(&work_dir);
     cmd.env("PEBBLES_CHANGE", &full_id);
     cmd.env("PEBBLES_VCS", vcs.name());
 
@@ -63,18 +75,36 @@ pub async fn build(id: IDish, skip_permissions: bool) -> Result<()> {
         cmd.env("OPENCODE_SKIP_PERMISSIONS", "1");
     }
 
-    // Use exec on Unix to replace process
+    if !wait {
+        cmd.args(["run", "/implement"]);
+        if print_logs {
+            cmd.arg("--print-logs");
+        }
+    }
+
+    tracing::trace!("ENV: PEBBLES_CHANGE={}", full_id);
+    tracing::trace!("ENV: PEBBLES_VCS={}", vcs.name());
+    if skip_permissions {
+        tracing::trace!("ENV: OPENCODE_SKIP_PERMISSIONS=1");
+    }
+    if print_logs {
+        tracing::trace!("ARG: --print-logs");
+    }
+    tracing::trace!("CLI: {:?}", cmd);
+
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
         let _ = cmd.exec();
-        // If we get here, exec failed
         anyhow::bail!("Failed to launch opencode");
     }
 
-    // On Windows, spawn and wait
     #[cfg(not(unix))]
     {
+        use std::process::Stdio;
+        if print_logs {
+            cmd.stdout(Stdio::inherit()).stderr(Stdio::inherit());
+        }
         let mut child = cmd.spawn()
             .context("Failed to launch opencode. Is it installed?")?;
         child.wait()?;

@@ -14,8 +14,9 @@ pub async fn list(args: ListArgs) -> Result<()> {
 
     let status = args.status.as_deref();
     let priority = args.priority.as_deref();
+    let changelog = args.changelog.as_deref();
 
-    let mut changes = repo.list(status, priority, args.all);
+    let mut changes = repo.list(status, priority, changelog, args.all);
 
     // Sort
     changes.sort_by(|a, b| {
@@ -47,6 +48,7 @@ pub async fn list(args: ListArgs) -> Result<()> {
         "ID".bold().to_string(),
         "Status".bold().to_string(),
         "Priority".bold().to_string(),
+        "Chg".bold().to_string(),
         "Age".bold().to_string(),
         "Title".bold().to_string(),
     ]);
@@ -55,6 +57,9 @@ pub async fn list(args: ListArgs) -> Result<()> {
     for change in changes {
         let status_str = format_status(&change.status.to_string());
         let priority_str = format_priority(&change.priority.to_string());
+        let changelog_str = change.changelog_type.as_ref()
+            .map(|ct| format_changelog_abbrev(&ct.to_string()))
+            .unwrap_or_else(|| "".to_string());
         let age = format_age(&change.created_at);
 
         // Truncate title if too long
@@ -72,6 +77,7 @@ pub async fn list(args: ListArgs) -> Result<()> {
             formatted_id,
             status_str,
             priority_str,
+            changelog_str,
             age,
             title,
         ]);
@@ -114,6 +120,20 @@ fn priority_rank(priority: &crate::models::Priority) -> u8 {
         Priority::High => 1,
         Priority::Medium => 2,
         Priority::Low => 3,
+    }
+}
+
+fn format_changelog_abbrev(changelog: &str) -> String {
+    use colored::Colorize;
+    match changelog {
+        "feature" => "F".green().bold().to_string(),
+        "fix" => "X".red().to_string(),
+        "change" => "C".yellow().to_string(),
+        "deprecated" => "D".dimmed().to_string(),
+        "removed" => "R".red().bold().to_string(),
+        "security" => "S".red().bold().to_string(),
+        "internal" => "I".dimmed().to_string(),
+        _ => changelog.to_string(),
     }
 }
 

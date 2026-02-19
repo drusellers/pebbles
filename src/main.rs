@@ -24,12 +24,17 @@ async fn main() -> Result<()> {
         Commands::Show { id } => commands::show(id).await,
         Commands::Update(args) => commands::update(args).await,
         Commands::Approve { id } => commands::approve(id).await,
-        Commands::Work { id, skip_permissions } => {
-            commands::work(id, skip_permissions).await
+        Commands::Start { id, isolate, wait, print_logs, skip_permissions, verbose } => {
+            if verbose {
+                tracing_subscriber::fmt()
+                    .with_max_level(tracing::Level::TRACE)
+                    .with_target(false)
+                    .init();
+            }
+            commands::start(id, isolate, wait, print_logs, skip_permissions).await
         }
         Commands::Done { id, auto, force } => commands::done(id, auto, force).await,
         Commands::Cleanup { id } => commands::cleanup(id).await,
-        Commands::Build { id, skip_permissions } => commands::build(id, skip_permissions).await,
         Commands::Log { id } => commands::log(id).await,
         Commands::Current => commands::current().await,
         Commands::Edit { id } => commands::edit(id).await,

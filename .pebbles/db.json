@@ -1,5 +1,31 @@
 {
   "changes": {
+    "fq24": {
+      "id": "fq24",
+      "title": "abcd",
+      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
+      "status": "done",
+      "priority": "medium",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T21:06:18.410303Z",
+      "updated_at": "2026-02-18T22:28:08.567409Z"
+    },
+    "6vt4": {
+      "id": "6vt4",
+      "title": "add ls alias to list",
+      "body": "## Implementation\n\nAdded `ls` as a visible alias for the `list` command in src/cli.rs.\n\n## Log\n- 2026-02-18: Added `#[command(visible_alias = \"ls\")]` to List variant",
+      "status": "done",
+      "priority": "medium",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:40:24.940070Z",
+      "updated_at": "2026-02-18T22:49:04.754953Z"
+    },
     "2p4t": {
       "id": "2p4t",
       "title": "abc",
@@ -13,18 +39,44 @@
       "created_at": "2026-02-18T21:06:10.592887Z",
       "updated_at": "2026-02-18T21:14:31.428830Z"
     },
-    "fq24": {
-      "id": "fq24",
-      "title": "abcd",
-      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
-      "status": "done",
+    "hoy9": {
+      "id": "hoy9",
+      "title": "Add support for issues with dependencies",
+      "body": "Docket would call these epics, not the world's biggest fan of epic, but we want to track the idea of dependencies between issues and also show that in the list view. This means the list view is going to need a tree mode. so the \"list\" view should probably not draw boxes around everything - the table code should not have borders but still help us control the output (i.e. the width.)",
+      "status": "draft",
       "priority": "medium",
       "parent": null,
       "children": [],
       "dependencies": [],
       "tags": [],
-      "created_at": "2026-02-18T21:06:18.410303Z",
-      "updated_at": "2026-02-18T22:28:08.567409Z"
+      "created_at": "2026-02-18T22:37:31.482437Z",
+      "updated_at": "2026-02-18T22:37:31.482437Z"
+    },
+    "0zu0": {
+      "id": "0zu0",
+      "title": "add plan command",
+      "body": "The idea of the plan command is we go ahead and review the contents of the issue and then invoke open code with our custom plan command, which allows us to further refine the issues before we approve them.",
+      "status": "draft",
+      "priority": "medium",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:40:38.651291Z",
+      "updated_at": "2026-02-18T22:40:38.651291Z"
+    },
+    "oija": {
+      "id": "oija",
+      "title": "Add output feedback to opencode run command",
+      "body": "\n## Goal\nAdd output feedback to the 'pebbles start' command so users know when opencode is working.\n\n## Acceptance Criteria\n- [x] Add --print-logs flag to pebbles start command\n- [x] --print-logs flag passes through to opencode run command\n- [x] On non-Unix systems, stdout/stderr is inherited when --print-logs is set\n\n## Implementation Notes\n\nAdded a new --print-logs flag to the 'pebbles start' command:\n\n### Changes Made:\n1. **src/cli.rs:52-54** - Added --print-logs flag to Start command with help text\n2. **src/main.rs:27,34** - Updated Start command handler to pass print_logs parameter\n3. **src/commands/start.rs:13,78-80,84,89-101** - \n   - Updated function signature to accept print_logs parameter\n   - Pass --print-logs to opencode when flag is set\n   - On non-Unix systems, inherit stdout/stderr when flag is set\n\n### Usage:\n```\npebbles start <id> --print-logs\n```\n\nThis will show opencode's output/logs to the console instead of running silently.\n\n## Log\n- 2026-02-19: Added --print-logs flag to pebbles start command\n",
+      "status": "done",
+      "priority": "high",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-18T22:49:43.672257Z",
+      "updated_at": "2026-02-19T13:35:13.125266Z"
     }
   },
   "events": [
@@ -190,6 +242,128 @@
         "to": "done"
       },
       "created_at": "2026-02-18T22:28:08.567444Z"
+    },
+    {
+      "id": "97fc79a2-2f92-498f-ad2a-ebefe5e9c299",
+      "change_id": "hoy9",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "Add support for issues with dependencies"
+      },
+      "created_at": "2026-02-18T22:39:37.718979Z"
+    },
+    {
+      "id": "abcd9358-432c-47a2-95c3-c635043042f5",
+      "change_id": "6vt4",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "add ls alias to list"
+      },
+      "created_at": "2026-02-18T22:40:24.940073Z"
+    },
+    {
+      "id": "d7a26005-d459-4eca-a5ce-0589b9490c93",
+      "change_id": "0zu0",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "add plan command"
+      },
+      "created_at": "2026-02-18T22:41:01.800181Z"
+    },
+    {
+      "id": "8fbe69c8-5790-4863-ac0e-90df279a6b1f",
+      "change_id": "6vt4",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-18T22:41:48.044525Z"
+    },
+    {
+      "id": "4d3d969a-373c-4384-8cf5-5456f37d4618",
+      "change_id": "6vt4",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-18T22:41:50.104294Z"
+    },
+    {
+      "id": "8e1a18d5-1b1d-47eb-8fa3-100c335e46ee",
+      "change_id": "6vt4",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-18T22:48:56.397441Z"
+    },
+    {
+      "id": "9e7ce609-28cf-44f5-816a-cdff8a28308a",
+      "change_id": "6vt4",
+      "event_type": "status_changed",
+      "data": {
+        "from": "in_progress",
+        "to": "done"
+      },
+      "created_at": "2026-02-18T22:49:04.754990Z"
+    },
+    {
+      "id": "56ff1031-7ba9-4776-ac6a-4566126dd726",
+      "change_id": "oija",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "high",
+        "title": "Add output feedback to opencode run command"
+      },
+      "created_at": "2026-02-18T22:49:43.672283Z"
+    },
+    {
+      "id": "67700d75-5ef4-4242-b4f4-86be4794ff58",
+      "change_id": "oija",
+      "event_type": "status_changed",
+      "data": {
+        "from": "draft",
+        "to": "approved"
+      },
+      "created_at": "2026-02-19T13:30:52.648025Z"
+    },
+    {
+      "id": "9061a6e5-3a82-4f2b-99d9-c6e1d59a2463",
+      "change_id": "oija",
+      "event_type": "status_changed",
+      "data": {
+        "from": "approved",
+        "to": "in_progress"
+      },
+      "created_at": "2026-02-19T13:31:19.007619Z"
+    },
+    {
+      "id": "b540eb18-0220-4bb6-b939-9b02335e0faf",
+      "change_id": "oija",
+      "event_type": "updated",
+      "data": {
+        "field": "body"
+      },
+      "created_at": "2026-02-19T13:35:10.483493Z"
+    },
+    {
+      "id": "c34b790f-fff4-4c88-9465-54bc2fb94088",
+      "change_id": "oija",
+      "event_type": "status_changed",
+      "data": {
+        "from": "in_progress",
+        "to": "done"
+      },
+      "created_at": "2026-02-19T13:35:13.125280Z"
     }
   ]
 }

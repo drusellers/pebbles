@@ -16,7 +16,7 @@ Pebbles is a Rust CLI application that manages work items (changes) through thei
 ┌─────────────────────────────────────────────────────────────────┐
 │                       Commands Layer                             │
 │   Individual command implementations (commands/*.rs)             │
-│   init, new, list, show, update, approve, work, done, etc.      │
+│   init, new, list, show, update, approve, start, done, etc.     │
 └─────────────────────────────────────────────────────────────────┘
                                 │
             ┌───────────────────┼───────────────────┐
@@ -55,8 +55,7 @@ Each command is a separate module:
 | `show.rs` | `show` | Display change details |
 | `update.rs` | `update` | Modify change properties |
 | `approve.rs` | `approve` | Mark change as approved |
-| `work.rs` | `work` | Create workspace + launch opencode |
-| `build.rs` | `build` | Work without creating workspace |
+| `start.rs` | `start` | Start working on a change (alias: `work`) |
 | `done.rs` | `done` | Mark change complete |
 | `cleanup.rs` | `cleanup` | Remove workspace |
 | `log.rs` | `log` | Show event history |
@@ -196,14 +195,15 @@ project/
 
 ## AI Integration
 
-When `pebbles work <id>` is executed:
+When `pebbles start <id>` is executed:
 
-1. Creates workspace directory `ws-<id>/`
-2. VCS creates isolated working copy
+1. Optionally creates workspace directory `ws-<id>/` (with `--isolate`)
+2. VCS creates isolated working copy (if `--isolate`)
 3. Sets environment variables:
    - `PEBBLES_CHANGE=<id>`
    - `PEBBLES_VCS=<git|jujutsu>`
-4. Launches `opencode` in workspace
+4. Launches `opencode` in working directory
+5. Auto-runs `/implement` (unless `--wait` is specified)
 
 The `.opencode/commands/` directory provides AI guidance:
 - `implement.md` - How to implement a change

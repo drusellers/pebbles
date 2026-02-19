@@ -120,6 +120,28 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
         updated = true;
     }
 
+    // Update changelog type
+    if let Some(changelog_arg) = args.changelog {
+        let changelog_type: crate::models::ChangelogType = changelog_arg.into();
+
+        let change = repo.find_by_id_mut(&full_id)
+            .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
+
+        let old_changelog = change.changelog_type.as_ref().map(|ct| ct.to_string());
+        change.update_changelog_type(changelog_type.clone());
+
+        events.push(Event::new(
+            full_id.clone(),
+            EventType::ChangelogTypeChanged,
+            serde_json::json!({
+                "from": old_changelog,
+                "to": changelog_type.to_string(),
+            }),
+        ));
+
+        updated = true;
+    }
+
     // Add all events
     for event in events {
         repo.db.add_event(event);

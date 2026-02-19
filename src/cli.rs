@@ -20,6 +20,7 @@ pub enum Commands {
     New(NewArgs),
 
     /// List all changes
+    #[command(visible_alias = "ls")]
     List(ListArgs),
 
     /// Show details of a change
@@ -38,12 +39,25 @@ pub enum Commands {
     },
 
     /// Start working on a change
-    Work {
+    #[command(visible_alias = "work")]
+    Start {
         /// Change ID
         id: IDish,
+        /// Create isolated workspace (ws-<id>/)
+        #[arg(short, long)]
+        isolate: bool,
+        /// Don't auto-run /implement (opens opencode TUI instead)
+        #[arg(long)]
+        wait: bool,
+        /// Print opencode output/logs to console
+        #[arg(long)]
+        print_logs: bool,
         /// Skip opencode permission prompts
         #[arg(long)]
         skip_permissions: bool,
+        /// Verbose output - log CLI commands and ENV
+        #[arg(short, long)]
+        verbose: bool,
     },
 
     /// Mark a change as done
@@ -62,15 +76,6 @@ pub enum Commands {
     Cleanup {
         /// Change ID (or current change if not specified)
         id: Option<IDish>,
-    },
-
-    /// Build a change (start work without workspace)
-    Build {
-        /// Change ID
-        id: IDish,
-        /// Skip opencode permission prompts
-        #[arg(long)]
-        skip_permissions: bool,
     },
 
     /// Show event history for a change
@@ -126,7 +131,7 @@ pub struct NewArgs {
     pub edit: bool,
 
     /// Parent change ID
-    #[arg(short, long)]
+    #[arg(long)]
     pub parent: Option<String>,
 }
 
@@ -139,6 +144,10 @@ pub struct ListArgs {
     /// Filter by priority
     #[arg(short, long)]
     pub priority: Option<String>,
+
+    /// Filter by changelog type
+    #[arg(short, long)]
+    pub changelog: Option<String>,
 
     /// Show all changes including done
     #[arg(short, long)]
@@ -174,6 +183,10 @@ pub struct UpdateArgs {
     #[arg(short, long)]
     pub status: Option<String>,
 
+    /// Changelog type
+    #[arg(short, long, value_enum)]
+    pub changelog: Option<ChangelogTypeArg>,
+
     /// Open editor to modify body
     #[arg(short, long)]
     pub edit: bool,
@@ -185,6 +198,17 @@ pub enum PriorityArg {
     Medium,
     High,
     Critical,
+}
+
+#[derive(Clone, ValueEnum)]
+pub enum ChangelogTypeArg {
+    Feature,
+    Fix,
+    Change,
+    Deprecated,
+    Removed,
+    Security,
+    Internal,
 }
 
 impl fmt::Display for PriorityArg {

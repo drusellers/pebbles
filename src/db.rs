@@ -85,6 +85,7 @@ impl Db {
     pub fn list_changes(&self,
         status: Option<&str>,
         priority: Option<&str>,
+        changelog: Option<&str>,
         include_done: bool,
     ) -> Vec<&Change> {
         let mut changes: Vec<&Change> = self.data.changes.values().collect();
@@ -95,6 +96,15 @@ impl Db {
         
         if let Some(priority) = priority {
             changes.retain(|c| c.priority.to_string() == priority);
+        }
+        
+        if let Some(changelog) = changelog {
+            changes.retain(|c| {
+                c.changelog_type
+                    .as_ref()
+                    .map(|ct| ct.to_string() == changelog)
+                    .unwrap_or(false)
+            });
         }
         
         if !include_done {
@@ -149,6 +159,7 @@ mod tests {
             body: String::new(),
             status: Status::Draft,
             priority: Priority::Medium,
+            changelog_type: None,
             parent: None,
             children: Vec::new(),
             dependencies: Vec::new(),

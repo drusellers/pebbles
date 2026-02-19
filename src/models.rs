@@ -9,6 +9,7 @@ pub struct Change {
     pub body: String,
     pub status: Status,
     pub priority: Priority,
+    pub changelog_type: Option<ChangelogType>,
     pub parent: Option<String>,
     pub children: Vec<String>,
     pub dependencies: Vec<String>,
@@ -26,6 +27,7 @@ impl Change {
             body: String::new(),
             status: Status::Draft,
             priority,
+            changelog_type: None,
             parent: None,
             children: Vec::new(),
             dependencies: Vec::new(),
@@ -64,6 +66,11 @@ impl Change {
 
     pub fn update_priority(&mut self, priority: Priority) {
         self.priority = priority;
+        self.updated_at = Utc::now();
+    }
+
+    pub fn update_changelog_type(&mut self, changelog_type: ChangelogType) {
+        self.changelog_type = Some(changelog_type);
         self.updated_at = Utc::now();
     }
 }
@@ -118,6 +125,18 @@ pub enum Priority {
     Critical,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum ChangelogType {
+    Feature,
+    Fix,
+    Change,
+    Deprecated,
+    Removed,
+    Security,
+    Internal,
+}
+
 impl fmt::Display for Priority {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -129,6 +148,36 @@ impl fmt::Display for Priority {
     }
 }
 
+impl fmt::Display for ChangelogType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ChangelogType::Feature => write!(f, "feature"),
+            ChangelogType::Fix => write!(f, "fix"),
+            ChangelogType::Change => write!(f, "change"),
+            ChangelogType::Deprecated => write!(f, "deprecated"),
+            ChangelogType::Removed => write!(f, "removed"),
+            ChangelogType::Security => write!(f, "security"),
+            ChangelogType::Internal => write!(f, "internal"),
+        }
+    }
+}
+
+impl ChangelogType {
+    #[allow(dead_code)]
+    pub fn from_string(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "feature" => Some(ChangelogType::Feature),
+            "fix" => Some(ChangelogType::Fix),
+            "change" => Some(ChangelogType::Change),
+            "deprecated" => Some(ChangelogType::Deprecated),
+            "removed" => Some(ChangelogType::Removed),
+            "security" => Some(ChangelogType::Security),
+            "internal" => Some(ChangelogType::Internal),
+            _ => None,
+        }
+    }
+}
+
 impl From<crate::cli::PriorityArg> for Priority {
     fn from(p: crate::cli::PriorityArg) -> Self {
         match p {
@@ -136,6 +185,20 @@ impl From<crate::cli::PriorityArg> for Priority {
             crate::cli::PriorityArg::Medium => Priority::Medium,
             crate::cli::PriorityArg::High => Priority::High,
             crate::cli::PriorityArg::Critical => Priority::Critical,
+        }
+    }
+}
+
+impl From<crate::cli::ChangelogTypeArg> for ChangelogType {
+    fn from(ct: crate::cli::ChangelogTypeArg) -> Self {
+        match ct {
+            crate::cli::ChangelogTypeArg::Feature => ChangelogType::Feature,
+            crate::cli::ChangelogTypeArg::Fix => ChangelogType::Fix,
+            crate::cli::ChangelogTypeArg::Change => ChangelogType::Change,
+            crate::cli::ChangelogTypeArg::Deprecated => ChangelogType::Deprecated,
+            crate::cli::ChangelogTypeArg::Removed => ChangelogType::Removed,
+            crate::cli::ChangelogTypeArg::Security => ChangelogType::Security,
+            crate::cli::ChangelogTypeArg::Internal => ChangelogType::Internal,
         }
     }
 }
@@ -168,6 +231,7 @@ pub enum EventType {
     StatusChanged,
     Updated,
     PriorityChanged,
+    ChangelogTypeChanged,
     DependencyAdded,
     DependencyRemoved,
     ScratchpadAppended,

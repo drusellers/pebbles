@@ -86,9 +86,10 @@ impl ChangeRepository {
         &self,
         status: Option<&str>,
         priority: Option<&str>,
+        changelog: Option<&str>,
         include_done: bool,
     ) -> Vec<&Change> {
-        self.db.list_changes(status, priority, include_done)
+        self.db.list_changes(status, priority, changelog, include_done)
     }
 
     pub fn get_events(&self, change_id: &str) -> Vec<&Event> {

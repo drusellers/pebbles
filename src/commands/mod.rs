@@ -7,10 +7,9 @@ pub mod list;
 pub mod show;
 pub mod update;
 pub mod approve;
-pub mod work;
+pub mod start;
 pub mod done;
 pub mod cleanup;
-pub mod build;
 pub mod log;
 pub mod current;
 pub mod edit;
@@ -24,10 +23,9 @@ pub use list::list;
 pub use show::show;
 pub use update::update;
 pub use approve::approve;
-pub use work::work;
+pub use start::start;
 pub use done::done;
 pub use cleanup::cleanup;
-pub use build::build;
 pub use log::log;
 pub use current::current;
 pub use edit::edit;
@@ -72,9 +70,9 @@ fn resolve_id(id: Option<crate::idish::IDish>) -> Result<String> {
                         for ws in workspaces {
                             msg.push_str(&format!("  ws-{}\n", ws));
                         }
-                        msg.push_str("\nRun 'pebbles work <id>' to create a new workspace.");
+                        msg.push_str("\nRun 'pebbles start --isolate <id>' to create a new workspace.");
                     } else {
-                        msg.push_str("\n\nNo workspaces found. Run 'pebbles work <id>' to create one.");
+                        msg.push_str("\n\nNo workspaces found. Run 'pebbles start --isolate <id>' to create one.");
                     }
                 }
             } else {
