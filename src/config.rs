@@ -1,3 +1,4 @@
+use crate::harness::HarnessPreference;
 use crate::vcs::VcsPreference;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -13,6 +14,8 @@ pub struct Config {
     pub output: OutputConfig,
     #[serde(default)]
     pub editor: EditorConfig,
+    #[serde(default)]
+    pub harness: HarnessConfig,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -48,6 +51,12 @@ impl Default for OutputConfig {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct EditorConfig {
     pub command: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct HarnessConfig {
+    #[serde(default)]
+    pub prefer: HarnessPreference,
 }
 
 impl Config {

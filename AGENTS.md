@@ -49,6 +49,7 @@ See ARCHITECTURE.md for full details. Key components:
 - `src/models.rs` - Change, Event, Status, Priority
 - `src/db.rs` / `src/repository.rs` - JSON storage layer
 - `src/vcs/` - Git and Jujutsu abstractions
+- `src/harness/` - AI assistant abstractions (OpenCode, etc.)
 
 ## Code Conventions
 
@@ -101,3 +102,76 @@ println!("Change: {}", id);  // Uses Display trait
 let partial: ID = "ab".parse().unwrap();
 let full_id = partial.resolve(&db)?;  // Resolves to full ID
 ```
+
+## AI Harness Abstraction
+
+The harness provides a unified interface for calling AI assistants like OpenCode. It mirrors the VCS abstraction pattern.
+
+### File Structure
+
+```
+src/harness/
+├── mod.rs        # Trait, context, factory functions
+└── opencode.rs   # OpenCode implementation
+```
+
+### Core Trait
+
+```rust
+pub trait Harness: Send + Sync {
+    fn name(&self) -> &'static str;
+    fn detect(&self) -> bool;
+    
+    fn plan(&self, ctx: &HarnessContext) -> Result<()>;
+    fn implement(&self, ctx: &HarnessContext) -> Result<()>;
+    fn intake(&self, ctx: &HarnessContext) -> Result<()>;
+}
+```
+
+### Using the Harness in Commands
+
+```rust
+use crate::harness::{detect_harness_with_preference, HarnessContext};
+use crate::config::Config;
+
+// Get config
+let config = Config::load(&config_path).await?;
+
+// Detect harness (respects user preference)
+let harness = detect_harness_with_preference(config.harness.prefer)
+    .context("No AI harness detected (opencode)")?;
+
+// Build context using builder pattern
+let ctx = HarnessContext::new(vcs.name(), work_dir)
+    .with_change_id(full_id)
+    .with_skip_permissions(config.work.skip_permissions)
+    .with_print_logs(print_logs)
+    .with_wait_mode(wait);
+
+// Execute operation
+harness.implement(&ctx)?;
+```
+
+### Configuration
+
+Add to your `~/.pebbles/config.toml`:
+
+```toml
+[harness]
+prefer = "opencode"  # or "auto" for automatic detection
+```
+
+### Adding a New Harness
+
+1. Create new file in `src/harness/<name>.rs`
+2. Implement the `Harness` trait
+3. Add variant to `HarnessPreference` enum in `src/harness/mod.rs`
+4. Update `detect_harness()` and `detect_harness_with_preference()` factory functions
+
+### Design Principles
+
+- **No return values** - Operations are fire-and-forget; harness launches and exits
+- **Builder pattern** - `HarnessContext` uses builder for optional parameters
+- **Environment variables** - Context is passed via `PEBBLES_*` env vars
+- **Stateless implementations** - Unit structs with no fields
+- **Factory pattern** - Box<dyn Harness> for type erasure

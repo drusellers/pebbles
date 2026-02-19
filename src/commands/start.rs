@@ -1,12 +1,12 @@
 use crate::commands::{print_info, print_success};
 use crate::config::{get_config_path, Config};
+use crate::harness::{detect_harness_with_preference, HarnessContext};
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
 use anyhow::{Context, Result};
 use std::path::PathBuf;
-use std::process::Command;
 
 pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_permissions: bool) -> Result<()> {
     let mut repo = ChangeRepository::open().await?;
@@ -36,6 +36,9 @@ pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_
     let vcs = detect_vcs_with_preference(config.vcs.prefer)
         .context("No version control system detected (git or jujutsu)")?;
 
+    let harness = detect_harness_with_preference(config.harness.prefer)
+        .context("No AI harness detected (opencode)")?;
+
     print_info(&format!("Using {} for version control", vcs.name()));
 
     let work_dir: PathBuf = if isolate {
@@ -53,55 +56,28 @@ pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_
 
     if !wait {
         print_info(&format!(
-            "Launching opencode to implement change '{}'",
+            "Launching {} to implement change '{}'",
+            harness.name(),
             full_id
         ));
     } else {
-        print_info(&format!("Launching opencode for change '{}'", full_id));
+        print_info(&format!("Launching {} for change '{}'", harness.name(), full_id));
     }
 
-    let mut cmd = Command::new("opencode");
-    cmd.current_dir(&work_dir);
-    cmd.env("PEBBLES_CHANGE", full_id.to_string());
-    cmd.env("PEBBLES_VCS", vcs.name());
-
-    if skip_permissions {
-        cmd.env("OPENCODE_SKIP_PERMISSIONS", "1");
-    }
-
-    if !wait {
-        cmd.args(["run", "/implement"]);
-        if print_logs {
-            cmd.arg("--print-logs");
-        }
-    }
+    let ctx = HarnessContext::new(vcs.name(), work_dir)
+        .with_change_id(full_id.clone())
+        .with_skip_permissions(skip_permissions || config.work.skip_permissions)
+        .with_print_logs(print_logs)
+        .with_wait_mode(wait);
 
     tracing::trace!("ENV: PEBBLES_CHANGE={}", full_id);
     tracing::trace!("ENV: PEBBLES_VCS={}", vcs.name());
-    if skip_permissions {
+    if skip_permissions || config.work.skip_permissions {
         tracing::trace!("ENV: OPENCODE_SKIP_PERMISSIONS=1");
     }
     if print_logs {
         tracing::trace!("ARG: --print-logs");
     }
-    tracing::trace!("CLI: {:?}", cmd);
 
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        let _ = cmd.exec();
-        anyhow::bail!("Failed to launch opencode");
-    }
-
-    #[cfg(not(unix))]
-    {
-        use std::process::Stdio;
-        if print_logs {
-            cmd.stdout(Stdio::inherit()).stderr(Stdio::inherit());
-        }
-        let mut child = cmd.spawn()
-            .context("Failed to launch opencode. Is it installed?")?;
-        child.wait()?;
-        Ok(())
-    }
+    harness.implement(&ctx)
 }

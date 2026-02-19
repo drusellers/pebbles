@@ -1,11 +1,31 @@
 use crate::commands::{print_info, resolve_id};
 use crate::config::{get_config_path, Config};
+use crate::harness::{detect_harness_with_preference, HarnessContext};
 use crate::idish::IDish;
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
 use anyhow::{Context, Result};
 use colored::Colorize;
-use std::process::Command;
+use std::env;
+
+const AGENT_PREFIX: &str = "!agent:";
+
+fn extract_agent_instructions(text: &str) -> Vec<String> {
+    text.lines()
+        .filter_map(|line| {
+            let trimmed = line.trim();
+            trimmed
+                .strip_prefix(AGENT_PREFIX)
+                .or_else(|| trimmed.strip_prefix(&AGENT_PREFIX.to_uppercase()))
+                .or_else(|| {
+                    trimmed
+                        .strip_prefix("!agent ")
+                        .or_else(|| trimmed.strip_prefix("!AGENT "))
+                })
+                .map(|instruction| instruction.trim().to_string())
+        })
+        .collect()
+}
 
 pub async fn plan(id: Option<IDish>, wait: bool) -> Result<()> {
     let repo = ChangeRepository::open().await?;
@@ -25,7 +45,9 @@ pub async fn plan(id: Option<IDish>, wait: bool) -> Result<()> {
     let vcs = detect_vcs_with_preference(config.vcs.prefer)
         .context("No version control system detected (git or jujutsu)")?;
 
-    // Display the change
+    let harness = detect_harness_with_preference(config.harness.prefer)
+        .context("No AI harness detected (opencode)")?;
+
     println!("\n{}", "═".repeat(60).dimmed());
     println!(
         "{} {} {}",
@@ -40,36 +62,31 @@ pub async fn plan(id: Option<IDish>, wait: bool) -> Result<()> {
         println!("{}", "═".repeat(60).dimmed());
     }
 
+    let title_instructions = extract_agent_instructions(&change.title);
+    let body_instructions = extract_agent_instructions(&change.body);
+    let all_instructions: Vec<String> = title_instructions
+        .into_iter()
+        .chain(body_instructions)
+        .collect();
+
+    if !all_instructions.is_empty() {
+        println!("\n{}", format!("🤖 {} agent instruction(s) embedded", all_instructions.len()).yellow().dimmed());
+    }
+
     if !wait {
         print_info(&format!(
-            "Launching opencode to plan change '{}'",
+            "Launching {} to plan change '{}'",
+            harness.name(),
             full_id
         ));
     } else {
-        print_info(&format!("Launching opencode for change '{}'", full_id));
+        print_info(&format!("Launching {} for change '{}'", harness.name(), full_id));
     }
 
-    let mut cmd = Command::new("opencode");
-    cmd.env("PEBBLES_CHANGE", full_id.to_string());
-    cmd.env("PEBBLES_VCS", vcs.name());
+    let ctx = HarnessContext::new(vcs.name(), env::current_dir()?)
+        .with_change_id(full_id)
+        .with_agent_instructions(all_instructions)
+        .with_wait_mode(wait);
 
-    if !wait {
-        cmd.args(["run", "/plan"]);
-    }
-
-    #[cfg(unix)]
-    {
-        use std::os::unix::process::CommandExt;
-        let _ = cmd.exec();
-        anyhow::bail!("Failed to launch opencode");
-    }
-
-    #[cfg(not(unix))]
-    {
-        let mut child = cmd
-            .spawn()
-            .context("Failed to launch opencode. Is it installed?")?;
-        child.wait()?;
-        Ok(())
-    }
+    harness.plan(&ctx)
 }

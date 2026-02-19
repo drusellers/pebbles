@@ -2,6 +2,7 @@ pub mod cli;
 pub mod commands;
 pub mod config;
 pub mod db;
+pub mod harness;
 pub mod id;
 pub mod idish;
 pub mod models;

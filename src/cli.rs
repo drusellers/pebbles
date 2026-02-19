@@ -17,22 +17,26 @@ pub enum Commands {
     Init,
 
     /// Create a new change
+    #[command(next_help_heading = "Tasks")]
     New(NewArgs),
 
     /// List all changes
-    #[command(visible_alias = "ls")]
+    #[command(visible_alias = "ls", next_help_heading = "Tasks")]
     List(ListArgs),
 
     /// Show details of a change
+    #[command(next_help_heading = "Tasks")]
     Show {
         /// Change ID (or current change if not specified)
         id: Option<IDish>,
     },
 
     /// Update a change
+    #[command(next_help_heading = "Tasks")]
     Update(UpdateArgs),
 
     /// Approve a change for work
+    #[command(next_help_heading = "Tasks")]
     Approve {
         /// Change ID
         id: IDish,
@@ -61,6 +65,7 @@ pub enum Commands {
     },
 
     /// Mark a change as done
+    #[command(next_help_heading = "Tasks")]
     Done {
         /// Change ID (or current change if not specified)
         id: Option<IDish>,
@@ -91,6 +96,7 @@ pub enum Commands {
     Status,
 
     /// Edit a change in your editor
+    #[command(next_help_heading = "Tasks")]
     Edit {
         /// Change ID (or current change if not specified)
         id: Option<IDish>,
@@ -106,7 +112,7 @@ pub enum Commands {
     Doctor,
 
     /// Delete a change
-    #[command(visible_alias = "rm", visible_alias = "del")]
+    #[command(visible_alias = "rm", visible_alias = "del", next_help_heading = "Tasks")]
     Delete {
         /// Change ID
         id: IDish,
@@ -132,6 +138,7 @@ pub enum Commands {
     },
 
     /// Plan and break down a change into actionable steps
+    #[command(next_help_heading = "Tasks")]
     Plan {
         /// Change ID (or current change if not specified)
         id: Option<IDish>,
@@ -141,6 +148,7 @@ pub enum Commands {
     },
 
     /// Intake text from file or STDIN to create changes
+    #[command(next_help_heading = "Tasks")]
     Intake {
         /// Path to file containing the text (reads from STDIN if not provided)
         file: Option<std::path::PathBuf>,

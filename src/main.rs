@@ -5,6 +5,7 @@ mod cli;
 mod commands;
 mod config;
 mod db;
+mod harness;
 mod id;
 mod idish;
 mod models;
