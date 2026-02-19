@@ -62,6 +62,11 @@ Each command is a separate module:
 | `current.rs` | `current` | Show current workspace change |
 | `edit.rs` | `edit` | Open change in editor |
 | `delete.rs` | `delete` | Remove a change |
+| `block.rs` | `block` | Add a blocking dependency |
+| `unblock.rs` | `unblock` | Remove a blocking dependency |
+| `plan.rs` | `plan` | Break down a change into steps |
+| `intake.rs` | `intake` | Create changes from text file/STDIN |
+| `status.rs` | `status` | Show workspace status |
 | `doctor.rs` | `doctor` | Check dependencies |
 | `completions.rs` | `completions` | Generate shell completions |
 
@@ -72,15 +77,16 @@ Core entity representing a work item:
 
 ```rust
 struct Change {
-    id: String,           // Unique identifier (e.g., "abc12")
-    title: String,        // Brief description
-    body: String,         // Detailed spec/markdown
-    status: Status,       // Current state
-    priority: Priority,   // Importance level
-    parent: Option<String>,     // For subtasks
-    children: Vec<String>,      // Child change IDs
-    dependencies: Vec<String>,  // Blocked by these changes
-    tags: Vec<String>,          // Labels
+    id: Id,                    // Unique identifier (e.g., "abc1")
+    title: String,             // Brief description
+    body: String,              // Detailed spec/markdown
+    status: Status,            // Current state
+    priority: Priority,        // Importance level
+    changelog_type: Option<ChangelogType>,  // For release notes
+    parent: Option<Id>,        // For subtasks
+    children: Vec<Id>,         // Child change IDs
+    dependencies: Vec<Id>,     // Blocked by these changes
+    tags: Vec<String>,         // Labels
     created_at: DateTime<Utc>,
     updated_at: DateTime<Utc>,
 }
@@ -100,11 +106,23 @@ Tracks all changes to a change for audit trail:
 
 ```rust
 struct Event {
-    id: String,
-    change_id: String,
-    event_type: EventType,  // Created, StatusChanged, Updated, etc.
+    id: Id,
+    change_id: Id,
+    event_type: EventType,
     data: Value,            // JSON payload
     created_at: DateTime<Utc>,
+}
+
+enum EventType {
+    Created,
+    StatusChanged,
+    Updated,
+    PriorityChanged,
+    ChangelogTypeChanged,
+    DependencyAdded,
+    DependencyRemoved,
+    ScratchpadAppended,
+    ParentChanged,
 }
 ```
 
@@ -124,12 +142,30 @@ Higher-level abstraction that:
 - Automatically creates events on changes
 - Handles status transitions
 
-### 5. ID Resolution (`src/idish.rs`)
+### 5. ID Types (`src/id.rs`, `src/idish.rs`)
 
-`IDish` type provides flexible ID input:
+The codebase uses a two-layer ID system:
+
+#### `Id` (Storage Layer)
+Strongly-typed, validated identifier used throughout the data layer:
+
+```rust
+pub struct Id(String);  // 4-char alphanumeric lowercase
+```
+
+- Validates alphanumeric lowercase characters only
+- Used in `Change`, `Event`, and database operations
+- Provides type safety - prevents accidental string/ID mixing
+
+#### `IDish` (CLI Layer)
+CLI input wrapper that provides fuzzy resolution:
+
+```rust
+pub struct IDish(String);
+```
 
 - Case-insensitive exact match (fastest)
-- Case-insensitive prefix matching
+- Case-insensitive prefix matching when exact fails
 - Returns error if ambiguous (multiple matches)
 
 Example: `abc1`, `ABC1`, `ab` all resolve to change `abc1` if unique.

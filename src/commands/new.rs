@@ -6,8 +6,8 @@ use crate::models::{Change, Priority};
 use crate::repository::ChangeRepository;
 use anyhow::{Context, Result};
 use rand::{thread_rng, Rng};
-
 const ALPHANUMERIC: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
+const DEFAULT_TEMPLATE: &str = include_str!("../../templates/new_issue.md");
 
 pub async fn new(args: NewArgs) -> Result<()> {
     let mut repo = ChangeRepository::open().await?;
@@ -39,9 +39,11 @@ pub async fn new(args: NewArgs) -> Result<()> {
     
     // Handle body
     let body = if args.edit {
-        edit_in_editor("", &get_config_path()?).await?
+        edit_in_editor(DEFAULT_TEMPLATE, &get_config_path()?).await?
+    } else if let Some(body) = args.body {
+        body
     } else {
-        args.body.unwrap_or_default()
+        edit_in_editor(DEFAULT_TEMPLATE, &get_config_path()?).await?
     };
     change.body = body;
     

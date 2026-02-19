@@ -42,6 +42,12 @@ pebbles start <id> --wait
 # Create changes from text file (intake)
 pebbles intake features.txt
 
+# Plan and break down a change into actionable steps
+pebbles plan <id>
+
+# Delete a change
+pebbles delete <id>
+
 # When done, mark complete
 pebbles done <id>
 ```
@@ -83,6 +89,13 @@ Draft → Approved → InProgress → Review → Done
 | `cleanup`     | Clean up a workspace after work is complete                      |
 | `intake`      | Intake text from file or STDIN to create changes                 |
 | `completions` | Generate shell completions                                       |
+| `current`     | Show the current change (when in a workspace)                    |
+| `status`      | Show workspace status including change details                   |
+| `edit`        | Edit a change in your editor                                     |
+| `delete`      | Delete a change (aliases: `rm`, `del`)                           |
+| `block`       | Add a blocking dependency to a change                            |
+| `unblock`     | Remove a blocking dependency from a change                       |
+| `plan`        | Plan and break down a change into actionable steps               |
 
 ## Configuration
 
@@ -142,6 +155,93 @@ The text is passed to opencode, which will:
 4. Create all child changes linked to the parent
 
 This creates a hierarchical structure of related work items.
+
+## Dependencies and Blocking
+
+Use the `block` command to mark one change as dependent on another:
+
+```bash
+# Mark change-456 as blocked by change-123
+pebbles block change-456 change-123
+```
+
+Use `unblock` to remove a dependency:
+
+```bash
+pebbles unblock change-456 change-123
+```
+
+## Planning Workflow
+
+The `plan` command uses AI to break down a change into actionable steps:
+
+```bash
+# Plan the current change or specify an ID
+pebbles plan
+pebbles plan <id>
+
+# Open in TUI without auto-running /plan
+pebbles plan --wait
+```
+
+This creates a detailed implementation plan as a child change.
+
+## Current Workspace Commands
+
+When working inside a workspace:
+
+```bash
+# Show the current change
+pebbles current
+
+# Show workspace status
+pebbles status
+
+# Edit the current change in your editor
+pebbles edit
+```
+
+## Command Options
+
+### List Filtering and Sorting
+
+```bash
+# Filter by status
+pebbles list --status inprogress
+
+# Filter by priority
+pebbles list --priority high
+
+# Filter by changelog type
+pebbles list --changelog feature
+
+# Sort by different fields
+pebbles list --sort priority
+pebbles list --sort created --reverse
+
+# Flat list instead of tree view
+pebbles list --flat
+```
+
+### Start Options
+
+```bash
+# Skip permission prompts
+pebbles start <id> --skip-permissions
+
+# Verbose output
+pebbles start <id> --verbose
+```
+
+### Done Options
+
+```bash
+# Verify all acceptance criteria are checked
+pebbles done <id> --auto
+
+# Force mark done even if criteria not met
+pebbles done <id> --force
+```
 
 ## License
 
