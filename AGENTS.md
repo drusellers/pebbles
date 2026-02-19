@@ -1,8 +1,21 @@
-# AGENT.md
+# AGENTS.md
 
 ## Project Overview
 
-Pebbles is a Rust CLI task tracker for AI-assisted development. It integrates with opencode and version control systems (Git, Jujutsu).
+Pebbles is a Rust CLI task tracker for AI-assisted development. It integrates with OpenCode and supports Jujutsu (primary) and Git for version control.
+
+## Version Control
+
+This repository uses **Jujutsu (jj)** as its primary version control system. Git is supported as a fallback.
+
+Common Jujutsu commands:
+```bash
+jj status              # Check repository status
+jj log                 # View commit history
+jj diff                # Show changes
+jj describe -m "msg"   # Update change description
+jj new                 # Create a new change
+```
 
 ## Build & Run
 

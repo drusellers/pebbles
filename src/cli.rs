@@ -87,6 +87,9 @@ pub enum Commands {
     /// Show current change (when in workspace)
     Current,
 
+    /// Show workspace status including change details
+    Status,
+
     /// Edit a change in your editor
     Edit {
         /// Change ID (or current change if not specified)

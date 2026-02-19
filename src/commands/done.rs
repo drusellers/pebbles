@@ -1,3 +1,18 @@
+/// Marks a change as completed (done).
+///
+/// This command updates the status of a change to Done in the pebbles database.
+/// It works regardless of whether the change was started with or without --isolate:
+/// - Without isolate: Changes status and optionally generates a commit message
+/// - With isolate: Same behavior, commit message generation may differ based on VCS
+///
+/// If a VCS (Git or Jujutsu) is detected in the current directory, the command will
+/// also generate a proposed commit message based on the change's title and acceptance
+/// criteria. This is purely informational and does not modify any VCS state.
+///
+/// # Arguments
+/// - `id`: Optional change ID. If not provided, attempts to detect from environment
+/// - `auto`: If true, checks that all acceptance criteria are completed before marking done
+/// - `force`: If true with --auto, bypasses acceptance criteria check
 use crate::commands::{print_info, print_success, resolve_id};
 use crate::idish::IDish;
 use crate::models::Status;
@@ -35,18 +50,20 @@ pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
         }
     }
 
-    // Update status
+    // Update status in the database - this always succeeds regardless of VCS/worktree
     repo.update_status(&full_id, Status::Done).await?;
 
     print_success(&format!("Marked change {} as done", full_id));
 
-    // Try to generate commit message
+    // Try to generate a commit message if VCS is available
+    // This is optional and works whether or not --isolate was used with 'start'
+    // The commit message is just displayed, not applied automatically
     if let Some(vcs) = detect_vcs() {
         print_info("Generating commit message...");
         let msg = vcs.generate_commit_msg(&title, &body)?;
         println!("\nProposed commit message:\n{}", msg);
 
-        // Note: Actual commit happens outside docket via opencode's describe command
+        // Note: Actual commit happens outside pebbles via opencode's describe command
         print_info("Use 'opencode /describe' to generate and apply commit message");
     }
 

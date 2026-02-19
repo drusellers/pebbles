@@ -38,6 +38,7 @@ async fn main() -> Result<()> {
         Commands::Cleanup { id } => commands::cleanup(id).await,
         Commands::Log { id } => commands::log(id).await,
         Commands::Current => commands::current().await,
+        Commands::Status => commands::status().await,
         Commands::Edit { id } => commands::edit(id).await,
         Commands::Completions { shell } => commands::completions(shell),
         Commands::Doctor => commands::doctor().await,
