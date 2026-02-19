@@ -111,6 +111,22 @@ pub enum Commands {
         #[arg(short, long)]
         force: bool,
     },
+
+    /// Add a blocking dependency to a change
+    Block {
+        /// Change ID that will be blocked
+        change_id: IDish,
+        /// Change ID that is the blocker (must be done first)
+        dependency_id: IDish,
+    },
+
+    /// Remove a blocking dependency from a change
+    Unblock {
+        /// Change ID to unblock
+        change_id: IDish,
+        /// Change ID to remove as a dependency
+        dependency_id: IDish,
+    },
 }
 
 #[derive(Parser)]

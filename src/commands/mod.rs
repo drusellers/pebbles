@@ -18,6 +18,7 @@ pub mod edit;
 pub mod completions;
 pub mod doctor;
 pub mod delete;
+pub mod block;
 
 pub use init::init;
 pub use new::new;
@@ -34,6 +35,7 @@ pub use edit::edit;
 pub use completions::completions;
 pub use doctor::doctor;
 pub use delete::delete;
+pub use block::{block, unblock};
 
 /// Resolve change ID from either explicit argument or current workspace.
 /// This function handles the case where the user provides an IDish or is in a workspace.

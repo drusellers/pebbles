@@ -42,5 +42,7 @@ async fn main() -> Result<()> {
         Commands::Completions { shell } => commands::completions(shell),
         Commands::Doctor => commands::doctor().await,
         Commands::Delete { id, force } => commands::delete(id, force).await,
+        Commands::Block { change_id, dependency_id } => commands::block(change_id, dependency_id).await,
+        Commands::Unblock { change_id, dependency_id } => commands::unblock(change_id, dependency_id).await,
     }
 }
