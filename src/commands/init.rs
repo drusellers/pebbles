@@ -3,6 +3,7 @@ use anyhow::{Context, Result};
 use crate::commands::print_success;
 use crate::config::{Config, find_pebbles_root};
 use crate::db::Db;
+use crate::template;
 use crate::vcs::find_repo_root;
 
 pub async fn init() -> Result<()> {
@@ -32,44 +33,15 @@ pub async fn init() -> Result<()> {
     let config = Config::default();
     config.save(&config_path).await?;
 
-    // Create .opencode directory with commands
-    create_opencode_commands(&repo_root).await?;
+    // Create .opencode directory with command templates
+    template::write_opencode_templates(&repo_root)
+        .await
+        .context("Failed to write OpenCode command templates")?;
 
     print_success(&format!(
         "Initialized pebbles in {}",
         pebbles_dir.display()
     ));
-
-    Ok(())
-}
-
-async fn create_opencode_commands(repo_root: &std::path::Path) -> Result<()> {
-    let opencode_dir = repo_root.join(".opencode").join("commands");
-
-    tokio::fs::create_dir_all(&opencode_dir)
-        .await
-        .context("Failed to create .opencode/commands directory")?;
-
-    // Create implement command
-    let implement_content = include_str!("../../.opencode/commands/implement.md");
-    tokio::fs::write(
-        opencode_dir.join("implement.md"),
-        implement_content
-    ).await?;
-
-    // Create describe command
-    let describe_content = include_str!("../../.opencode/commands/describe.md");
-    tokio::fs::write(
-        opencode_dir.join("describe.md"),
-        describe_content
-    ).await?;
-
-    // Create describe command
-    let plan_content = include_str!("../../.opencode/commands/plan.md");
-    tokio::fs::write(
-        opencode_dir.join("plan.md"),
-        plan_content
-    ).await?;
 
     Ok(())
 }

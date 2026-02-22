@@ -8,4 +8,5 @@ pub mod idish;
 pub mod models;
 pub mod repository;
 pub mod table;
+pub mod template;
 pub mod vcs;

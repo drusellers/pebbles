@@ -11,6 +11,7 @@ mod idish;
 mod models;
 mod repository;
 mod table;
+mod template;
 mod vcs;
 
 use cli::{Cli, Commands};
