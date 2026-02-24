@@ -1,5 +1,6 @@
 use super::{check_binary, run_harness_command, Harness, HarnessContext};
-use anyhow::Result;
+use crate::id::Id;
+use anyhow::{Context, Result};
 use std::process::Command;
 
 pub struct OpenCode;
@@ -74,5 +75,22 @@ impl Harness for OpenCode {
         cmd.args(["run", "/intake"]);
 
         run_harness_command(&mut cmd)
+    }
+
+    fn generate_commit_msg(&self, change_id: &Id) -> Result<String> {
+        let mut cmd = Command::new("opencode");
+        cmd.current_dir(std::env::current_dir()?);
+
+        cmd.env("PEBBLES_CHANGE", change_id.to_string());
+        cmd.args(["run", "/describe"]);
+
+        let output = cmd.output().context("Failed to run opencode /describe")?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            anyhow::bail!("opencode /describe failed: {}", stderr);
+        }
+
+        Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
     }
 }

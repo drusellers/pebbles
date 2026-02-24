@@ -14,10 +14,10 @@
 /// - `auto`: If true, checks that all acceptance criteria are completed before marking done
 /// - `force`: If true with --auto, bypasses acceptance criteria check
 use crate::commands::{print_info, print_success, resolve_id};
+use crate::harness::detect_harness;
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
-use crate::vcs::detect_vcs;
 use anyhow::Result;
 
 pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
@@ -29,7 +29,6 @@ pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
     // Clone data we need later
-    let title = change.title.clone();
     let body = change.body.clone();
 
     // Check if already done
@@ -55,16 +54,13 @@ pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
 
     print_success(&format!("Marked change {} as done", full_id));
 
-    // Try to generate a commit message if VCS is available
+    // Try to generate a commit message if a harness is available
     // This is optional and works whether or not --isolate was used with 'start'
     // The commit message is just displayed, not applied automatically
-    if let Some(vcs) = detect_vcs() {
+    if let Some(harness) = detect_harness() {
         print_info("Generating commit message...");
-        let msg = vcs.generate_commit_msg(&title, &body)?;
+        let msg = harness.generate_commit_msg(&full_id)?;
         println!("\nProposed commit message:\n{}", msg);
-
-        // Note: Actual commit happens outside pebbles via opencode's describe command
-        print_info("Use 'opencode /describe' to generate and apply commit message");
     }
 
     Ok(())

@@ -1,23 +1,9 @@
 {
   "changes": {
-    "2myi": {
-      "id": "2myi",
-      "title": "Add intake command",
-      "body": "\n## Log\n- 2026-02-19: Implemented intake command with file/STDIN reading, opencode integration, tests, and documentation\n\n## Acceptance Criteria\n\n1. **CLI Interface**\n   - [x] Add `intake` command to CLI with optional file path argument\n   - [x] Support reading from STDIN when no file is provided\n   - [x] Support reading from file when path is provided\n\n2. **Text Processing**\n   - [x] Read content from file or STDIN\n   - [x] Parse text to identify a single top-level issue\n   - [x] Identify all child issues from the text\n   - [x] Pass structured data to opencode with instructions to create issues\n\n3. **Issue Creation**\n   - [x] Launch opencode with `/intake` command\n   - [x] Create a single parent/top-level change\n   - [x] Create all other changes as children of the parent change\n   - [x] Each change should have a title extracted from the text\n\n4. **Error Handling**\n   - [x] Handle file not found errors gracefully\n   - [x] Handle empty input gracefully\n   - [x] Validate pebbles repository is initialized\n",
-      "status": "done",
-      "priority": "medium",
-      "changelog_type": "feature",
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-19T14:35:55.986061Z",
-      "updated_at": "2026-02-19T16:43:52.171958Z"
-    },
-    "hoy9": {
-      "id": "hoy9",
-      "title": "Add support for issues with dependencies",
-      "body": "Docket would call these epics, not the world's biggest fan of epic, but we want to track the idea of dependencies between issues and also show that in the list view. This means the list view is going to need a tree mode. so the \"list\" view should probably not draw boxes around everything - the table code should not have borders but still help us control the output (i.e. the width.)",
+    "lx24": {
+      "id": "lx24",
+      "title": "id prefix doesn't include complete items",
+      "body": "\n## Log\n- 2026-02-19: Fixed ID prefix highlighting to include completed items\n\n## Implementation\n- Modified `calculate_unique_prefixes` in `src/commands/list.rs` to use all changes from the database when computing unique prefixes\n- This ensures the list view shows the correct minimum unique prefix even when completed items are hidden\n- Fixed pre-existing test compilation issues (using `ID` instead of `Id`)\n- Fixed pre-existing clippy warnings in other files\n\n## Acceptance Criteria\n- [x] ID prefix calculation in list view includes completed items\n- [x] The unique prefix shown in the UI correctly reflects the minimum needed to disambiguate from all changes\n- [x] All tests pass\n- [x] Code compiles without warnings",
       "status": "done",
       "priority": "medium",
       "changelog_type": null,
@@ -25,8 +11,8 @@
       "children": [],
       "dependencies": [],
       "tags": [],
-      "created_at": "2026-02-18T22:37:31.482437Z",
-      "updated_at": "2026-02-19T15:34:57.901739Z"
+      "created_at": "2026-02-19T14:39:16.189076Z",
+      "updated_at": "2026-02-19T15:19:42.275819Z"
     },
     "2p4t": {
       "id": "2p4t",
@@ -41,6 +27,34 @@
       "tags": [],
       "created_at": "2026-02-18T21:06:10.592887Z",
       "updated_at": "2026-02-18T21:14:31.428830Z"
+    },
+    "1dut": {
+      "id": "1dut",
+      "title": "Provide Answers Workflow",
+      "body": "## Goal\n\nIf a plan has a list of questions, then this is a way for the human to provide answers to the LLM.\n\n```sh\npebbles answer <IDish>\n```\n\nthe idea is that we read the questions out to the user, and let them provide answers.\n\nStarting with just one pass at a time. Present X questions, the user responds, we save that, update the plan.\ngenerate new questions if needed.\n\n## Acceptance Criteria\n\n- [ ] Reads the question section, and present it to the user\n- [ ] Reads in user answers, updates the plan, and then writes any new questions\n- [ ] saves and exits\n\n## Context\n\n!agent: Scan the codebase and document relevant files, patterns, and constraints here.\n\n## Implementation Checklist\n\n!agent: Break down the implementation into steps and fill out this checklist\n- [ ] Step 1: Description\n- [ ] Step 2: Description\n- [ ] Step 3: Description\n\n## Questions\n\n!agent: Identify any open questions or ambiguities that need clarification\n- Question 1?\n- Question 2?\n\n## Log\n\n!agent: Update this log as you work on this change, recording significant progress, decisions, and blockers\n- YYYY-MM-DD: Change created\n\n## Changelog Type\n\nTo be determined during implementation (feature/fix/change/deprecated/removed/security/internal)\n",
+      "status": "draft",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-22T20:46:34.043423Z",
+      "updated_at": "2026-02-22T20:46:34.043423Z"
+    },
+    "qmdd": {
+      "id": "qmdd",
+      "title": "Add status command",
+      "body": "## Goal\nAdd a `status` command to pebbles that shows the current workspace context including the active change ID and resolved VCS, similar to how `git status` shows repository state.\n\n## Acceptance Criteria\n\n- [ ] CLI Interface\n  - [ ] Add `status` subcommand (no arguments)\n  - [ ] Works only when in a pebbles workspace\n  - [ ] Error if not in a workspace\n\n- [ ] Display Information\n  - [ ] Show current PEBBLES_CHANGE ID\n  - [ ] Show change title and current status\n  - [ ] Show resolved VCS (git/jujutsu)\n  - [ ] Show workspace directory path\n\n- [ ] Error Handling\n  - [ ] Clear error when not in a workspace\n  - [ ] Show helpful message about creating workspaces with `pebbles start --isolate`\n  - [ ] Verify pebbles repository is initialized\n\n## Context\n\n### Similar Commands:\n- `pebbles current` - Shows current workspace change ID only\n- `pebbles show` - Shows full change details (requires ID)\n\n### Key Implementation Patterns:\n- VCS detection via `crate::vcs::detect_vcs()`\n- Workspace ID via `vcs.current_workspace_id()`\n- Repository access via `ChangeRepository::open()`\n- ID resolution in commands/mod.rs `resolve_id()` function\n\n### Related Files:\n- src/cli.rs - Add Status variant to Commands enum\n- src/main.rs - Route Status command\n- src/commands/mod.rs - Export status module\n- src/commands/current.rs - Reference for workspace detection\n- src/vcs/mod.rs - VCS detection interface\n\n## Implementation Checklist\n\n- [ ] Step 1: Add CLI command structure\n  - Add `Status` variant to `Commands` enum in src/cli.rs\n  - No arguments needed (reads from environment/workspace)\n  - Update src/main.rs to route the command\n\n- [ ] Step 2: Create status command module\n  - Create src/commands/status.rs\n  - Detect VCS and get current workspace ID\n  - Fetch change details from repository\n  - Format and display the information\n\n- [ ] Step 3: Implement workspace detection\n  - Use VCS trait to detect current workspace\n  - Extract change ID from workspace name\n  - Handle case when not in a workspace\n\n- [ ] Step 4: Format output\n  - Show change ID with unique prefix highlighting\n  - Show title, status (with color), and VCS\n  - Show workspace directory path\n\n- [ ] Step 5: Update module exports\n  - Export status module in src/commands/mod.rs\n  - Add `pub use status::status;`\n\n- [ ] Step 6: Testing\n  - Test in workspace with git\n  - Test in workspace with jujutsu\n  - Test outside workspace (should error)\n  - Test in non-pebbles repo (should error)\n\n## Example Output\n\nWhen in workspace:\n```\nWorkspace: ws-abc12/\nChange: abc12 - Add status command\nStatus: in_progress\nVCS: jujutsu\n```\n\nWhen not in workspace:\n```\nError: Not in a pebbles workspace\n\nRun 'pebbles start --isolate <id>' to create a workspace.\n```\n\n## Log\n- 2026-02-19: Planning completed - acceptance criteria and implementation checklist defined\n\n## Changelog Type\nfeature",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-19T18:11:21.771416Z",
+      "updated_at": "2026-02-19T18:32:22.203450Z"
     },
     "6vt4": {
       "id": "6vt4",
@@ -70,10 +84,38 @@
       "created_at": "2026-02-19T18:51:24.791182Z",
       "updated_at": "2026-02-19T18:51:24.791182Z"
     },
-    "fq24": {
-      "id": "fq24",
-      "title": "abcd",
-      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
+    "wijr": {
+      "id": "wijr",
+      "title": "Address !agent comments",
+      "body": "## Goal\n\nProvide a command that will provide the appropriate responses from agents in a issue.\n\n## Acceptance Criteria\n\n- [ ] Can run `pebbles assist <IDish>` which will read the issue and then address the `!agent: <MSG>` comments\n\n## Context\n\n!agent: Scan the codebase and document relevant files, patterns, and constraints here.\n\n## Implementation Checklist\n\n!agent: Break down the implementation into steps and fill out this checklist\n- [ ] Step 1: Description\n- [ ] Step 2: Description\n- [ ] Step 3: Description\n\n## Questions\n\n!agent: Identify any open questions or ambiguities that need clarification\n- Question 1?\n- Question 2?\n\n## Log\n\n!agent: Update this log as you work on this change, recording significant progress, decisions, and blockers\n- YYYY-MM-DD: Change created\n\n## Changelog Type\n\nTo be determined during implementation (feature/fix/change/deprecated/removed/security/internal)\n",
+      "status": "draft",
+      "priority": "medium",
+      "changelog_type": null,
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-22T20:41:49.794897Z",
+      "updated_at": "2026-02-22T20:41:49.794897Z"
+    },
+    "2myi": {
+      "id": "2myi",
+      "title": "Add intake command",
+      "body": "\n## Log\n- 2026-02-19: Implemented intake command with file/STDIN reading, opencode integration, tests, and documentation\n\n## Acceptance Criteria\n\n1. **CLI Interface**\n   - [x] Add `intake` command to CLI with optional file path argument\n   - [x] Support reading from STDIN when no file is provided\n   - [x] Support reading from file when path is provided\n\n2. **Text Processing**\n   - [x] Read content from file or STDIN\n   - [x] Parse text to identify a single top-level issue\n   - [x] Identify all child issues from the text\n   - [x] Pass structured data to opencode with instructions to create issues\n\n3. **Issue Creation**\n   - [x] Launch opencode with `/intake` command\n   - [x] Create a single parent/top-level change\n   - [x] Create all other changes as children of the parent change\n   - [x] Each change should have a title extracted from the text\n\n4. **Error Handling**\n   - [x] Handle file not found errors gracefully\n   - [x] Handle empty input gracefully\n   - [x] Validate pebbles repository is initialized\n",
+      "status": "done",
+      "priority": "medium",
+      "changelog_type": "feature",
+      "parent": null,
+      "children": [],
+      "dependencies": [],
+      "tags": [],
+      "created_at": "2026-02-19T14:35:55.986061Z",
+      "updated_at": "2026-02-19T16:43:52.171958Z"
+    },
+    "hoy9": {
+      "id": "hoy9",
+      "title": "Add support for issues with dependencies",
+      "body": "Docket would call these epics, not the world's biggest fan of epic, but we want to track the idea of dependencies between issues and also show that in the list view. This means the list view is going to need a tree mode. so the \"list\" view should probably not draw boxes around everything - the table code should not have borders but still help us control the output (i.e. the width.)",
       "status": "done",
       "priority": "medium",
       "changelog_type": null,
@@ -81,8 +123,8 @@
       "children": [],
       "dependencies": [],
       "tags": [],
-      "created_at": "2026-02-18T21:06:18.410303Z",
-      "updated_at": "2026-02-18T22:28:08.567409Z"
+      "created_at": "2026-02-18T22:37:31.482437Z",
+      "updated_at": "2026-02-19T15:34:57.901739Z"
     },
     "oija": {
       "id": "oija",
@@ -98,20 +140,6 @@
       "created_at": "2026-02-18T22:49:43.672257Z",
       "updated_at": "2026-02-19T13:35:13.125266Z"
     },
-    "qmdd": {
-      "id": "qmdd",
-      "title": "Add status command",
-      "body": "## Goal\nAdd a `status` command to pebbles that shows the current workspace context including the active change ID and resolved VCS, similar to how `git status` shows repository state.\n\n## Acceptance Criteria\n\n- [ ] CLI Interface\n  - [ ] Add `status` subcommand (no arguments)\n  - [ ] Works only when in a pebbles workspace\n  - [ ] Error if not in a workspace\n\n- [ ] Display Information\n  - [ ] Show current PEBBLES_CHANGE ID\n  - [ ] Show change title and current status\n  - [ ] Show resolved VCS (git/jujutsu)\n  - [ ] Show workspace directory path\n\n- [ ] Error Handling\n  - [ ] Clear error when not in a workspace\n  - [ ] Show helpful message about creating workspaces with `pebbles start --isolate`\n  - [ ] Verify pebbles repository is initialized\n\n## Context\n\n### Similar Commands:\n- `pebbles current` - Shows current workspace change ID only\n- `pebbles show` - Shows full change details (requires ID)\n\n### Key Implementation Patterns:\n- VCS detection via `crate::vcs::detect_vcs()`\n- Workspace ID via `vcs.current_workspace_id()`\n- Repository access via `ChangeRepository::open()`\n- ID resolution in commands/mod.rs `resolve_id()` function\n\n### Related Files:\n- src/cli.rs - Add Status variant to Commands enum\n- src/main.rs - Route Status command\n- src/commands/mod.rs - Export status module\n- src/commands/current.rs - Reference for workspace detection\n- src/vcs/mod.rs - VCS detection interface\n\n## Implementation Checklist\n\n- [ ] Step 1: Add CLI command structure\n  - Add `Status` variant to `Commands` enum in src/cli.rs\n  - No arguments needed (reads from environment/workspace)\n  - Update src/main.rs to route the command\n\n- [ ] Step 2: Create status command module\n  - Create src/commands/status.rs\n  - Detect VCS and get current workspace ID\n  - Fetch change details from repository\n  - Format and display the information\n\n- [ ] Step 3: Implement workspace detection\n  - Use VCS trait to detect current workspace\n  - Extract change ID from workspace name\n  - Handle case when not in a workspace\n\n- [ ] Step 4: Format output\n  - Show change ID with unique prefix highlighting\n  - Show title, status (with color), and VCS\n  - Show workspace directory path\n\n- [ ] Step 5: Update module exports\n  - Export status module in src/commands/mod.rs\n  - Add `pub use status::status;`\n\n- [ ] Step 6: Testing\n  - Test in workspace with git\n  - Test in workspace with jujutsu\n  - Test outside workspace (should error)\n  - Test in non-pebbles repo (should error)\n\n## Example Output\n\nWhen in workspace:\n```\nWorkspace: ws-abc12/\nChange: abc12 - Add status command\nStatus: in_progress\nVCS: jujutsu\n```\n\nWhen not in workspace:\n```\nError: Not in a pebbles workspace\n\nRun 'pebbles start --isolate <id>' to create a workspace.\n```\n\n## Log\n- 2026-02-19: Planning completed - acceptance criteria and implementation checklist defined\n\n## Changelog Type\nfeature",
-      "status": "done",
-      "priority": "medium",
-      "changelog_type": null,
-      "parent": null,
-      "children": [],
-      "dependencies": [],
-      "tags": [],
-      "created_at": "2026-02-19T18:11:21.771416Z",
-      "updated_at": "2026-02-19T18:32:22.203450Z"
-    },
     "0zu0": {
       "id": "0zu0",
       "title": "add plan command",
@@ -126,10 +154,10 @@
       "created_at": "2026-02-18T22:40:38.651291Z",
       "updated_at": "2026-02-19T15:47:27.159288Z"
     },
-    "lx24": {
-      "id": "lx24",
-      "title": "id prefix doesn't include complete items",
-      "body": "\n## Log\n- 2026-02-19: Fixed ID prefix highlighting to include completed items\n\n## Implementation\n- Modified `calculate_unique_prefixes` in `src/commands/list.rs` to use all changes from the database when computing unique prefixes\n- This ensures the list view shows the correct minimum unique prefix even when completed items are hidden\n- Fixed pre-existing test compilation issues (using `ID` instead of `Id`)\n- Fixed pre-existing clippy warnings in other files\n\n## Acceptance Criteria\n- [x] ID prefix calculation in list view includes completed items\n- [x] The unique prefix shown in the UI correctly reflects the minimum needed to disambiguate from all changes\n- [x] All tests pass\n- [x] Code compiles without warnings",
+    "fq24": {
+      "id": "fq24",
+      "title": "abcd",
+      "body": "We need a CLI command that lets us edit the title of an issue.\n\n## Implementation\n\nThe functionality already exists via the `pebbles update` command:\n\n```\npebbles update <id> --title \"new title\"\n```\n\n## Log\n- 2026-02-18: Verified `pebbles update --title` already provides this functionality\n- 2026-02-18: Fixed pre-existing clippy warnings across the codebase",
       "status": "done",
       "priority": "medium",
       "changelog_type": null,
@@ -137,8 +165,8 @@
       "children": [],
       "dependencies": [],
       "tags": [],
-      "created_at": "2026-02-19T14:39:16.189076Z",
-      "updated_at": "2026-02-19T15:19:42.275819Z"
+      "created_at": "2026-02-18T21:06:18.410303Z",
+      "updated_at": "2026-02-18T22:28:08.567409Z"
     }
   },
   "events": [
@@ -765,6 +793,28 @@
         "title": "Implement Releases feature for Pebbles"
       },
       "created_at": "2026-02-19T18:51:24.791217Z"
+    },
+    {
+      "id": "24xo",
+      "change_id": "wijr",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "Address !agent comments"
+      },
+      "created_at": "2026-02-22T20:42:41.972496Z"
+    },
+    {
+      "id": "rw1w",
+      "change_id": "1dut",
+      "event_type": "created",
+      "data": {
+        "parent": null,
+        "priority": "medium",
+        "title": "Provide Answers Workflow"
+      },
+      "created_at": "2026-02-22T20:48:36.273906Z"
     }
   ]
 }

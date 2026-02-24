@@ -23,7 +23,6 @@ pub trait Vcs: Send + Sync {
     fn detect(&self) -> bool;
     fn create_workspace(&self, id: &Id) -> Result<PathBuf>;
     fn cleanup_workspace(&self, id: &Id) -> Result<()>;
-    fn generate_commit_msg(&self, title: &str, body: &str) -> Result<String>;
     fn current_workspace_id(&self) -> Option<Id>;
     #[allow(dead_code)]
     fn commit(&self, message: &str) -> Result<()>;

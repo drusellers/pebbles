@@ -21,6 +21,10 @@ pub trait Harness: Send + Sync {
     fn plan(&self, ctx: &HarnessContext) -> Result<()>;
     fn implement(&self, ctx: &HarnessContext) -> Result<()>;
     fn intake(&self, ctx: &HarnessContext) -> Result<()>;
+
+    /// Generate a commit message for a completed change
+    /// Returns the formatted commit message as a string
+    fn generate_commit_msg(&self, change_id: &Id) -> Result<String>;
 }
 
 #[derive(Debug, Clone)]

@@ -76,11 +76,6 @@ impl Vcs for Git {
         Ok(())
     }
 
-    fn generate_commit_msg(&self, title: &str, _body: &str) -> Result<String> {
-        // Simple implementation - could be enhanced with AI
-        Ok(format!("{}\n\nImplemented change", title))
-    }
-
     fn current_workspace_id(&self) -> Option<Id> {
         let current_dir = std::env::current_dir().ok()?;
         let dir_name = current_dir.file_name()?.to_str()?;
