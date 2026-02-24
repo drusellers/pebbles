@@ -102,6 +102,35 @@ impl Change {
         self.dependencies.retain(|id| id != dep_id);
         self.updated_at = Utc::now();
     }
+
+    /// Check if all acceptance criteria are completed
+    /// Returns true if all acceptance criteria items are checked, or if there are no acceptance criteria
+    pub fn check_acceptance_criteria(&self) -> bool {
+        // Look for unchecked items in acceptance criteria section
+        let mut in_acceptance_criteria = false;
+
+        for line in self.body.lines() {
+            let trimmed = line.trim();
+
+            // Check for acceptance criteria header
+            if trimmed.to_lowercase().contains("acceptance criteria") {
+                in_acceptance_criteria = true;
+                continue;
+            }
+
+            // Exit if we hit another section
+            if in_acceptance_criteria && trimmed.starts_with("##") {
+                break;
+            }
+
+            // Check for unchecked items
+            if in_acceptance_criteria && trimmed.starts_with("- [ ]") {
+                return false;
+            }
+        }
+
+        true
+    }
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]

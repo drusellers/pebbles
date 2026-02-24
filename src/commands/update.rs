@@ -36,12 +36,20 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
         updated = true;
     }
 
-    // Update body (direct)
+    // Update body (direct or from file)
     if let Some(body) = args.body {
+        let body_content = if let Some(file_path) = body.strip_prefix('@') {
+            tokio::fs::read_to_string(file_path)
+                .await
+                .with_context(|| format!("Failed to read body from file: {}", file_path))?
+        } else {
+            body
+        };
+
         let change = repo.find_by_id_mut(&full_id)
             .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
-        change.update_body(body);
+        change.update_body(body_content);
 
         events.push(Event::new(
             full_id.clone(),

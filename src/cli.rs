@@ -112,7 +112,11 @@ pub enum Commands {
     Doctor,
 
     /// Delete a change
-    #[command(visible_alias = "rm", visible_alias = "del", next_help_heading = "Tasks")]
+    #[command(
+        visible_alias = "rm",
+        visible_alias = "del",
+        next_help_heading = "Tasks"
+    )]
     Delete {
         /// Change ID
         id: IDish,
@@ -217,7 +221,7 @@ pub struct UpdateArgs {
     #[arg(short, long)]
     pub title: Option<String>,
 
-    /// New body
+    /// New body (prefix with @ to read from file, e.g., @file.txt)
     #[arg(short, long)]
     pub body: Option<String>,
 
