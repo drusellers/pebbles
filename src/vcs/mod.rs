@@ -1,3 +1,4 @@
+use crate::config::{get_config_path, Config};
 use crate::id::Id;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -24,7 +25,6 @@ pub trait Vcs: Send + Sync {
     fn create_workspace(&self, id: &Id) -> Result<PathBuf>;
     fn cleanup_workspace(&self, id: &Id) -> Result<()>;
     fn current_workspace_id(&self) -> Option<Id>;
-    #[allow(dead_code)]
     fn commit(&self, message: &str) -> Result<()>;
 }
 
@@ -43,25 +43,28 @@ pub fn detect_vcs() -> Option<Box<dyn Vcs>> {
     None
 }
 
-pub fn detect_vcs_with_preference(prefer: VcsPreference) -> Option<Box<dyn Vcs>> {
-    match prefer {
+pub async fn detect_vcs_with_preference() -> Result<Option<Box<dyn Vcs>>> {
+    let config_path = get_config_path()?;
+    let config = Config::load(&config_path).await?;
+    
+    match config.vcs.prefer {
         VcsPreference::Git => {
             let git = git::Git;
             if git.detect() {
-                Some(Box::new(git))
+                Ok(Some(Box::new(git)))
             } else {
-                None
+                Ok(None)
             }
         }
         VcsPreference::Jujutsu => {
             let jj = jujutsu::Jujutsu;
             if jj.detect() {
-                Some(Box::new(jj))
+                Ok(Some(Box::new(jj)))
             } else {
-                None
+                Ok(None)
             }
         }
-        VcsPreference::Auto => detect_vcs(),
+        VcsPreference::Auto => Ok(detect_vcs()),
     }
 }
 

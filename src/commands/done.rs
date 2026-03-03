@@ -1,32 +1,42 @@
 /// Marks a change as completed (done).
 ///
 /// This command updates the status of a change to Done in the pebbles database.
-/// It works regardless of whether the change was started with or without --isolate:
-/// - Without isolate: Changes status and optionally generates a commit message
-/// - With isolate: Same behavior, commit message generation may differ based on VCS
+/// It works regardless of whether the change was started with or without --isolate.
 ///
-/// If a VCS (Git or Jujutsu) is detected in the current directory, the command will
-/// also generate a proposed commit message based on the change's title and acceptance
-/// criteria. This is purely informational and does not modify any VCS state.
+/// When `--auto` is used:
+/// - Checks that all acceptance criteria are completed (unless `--force` is used)
+/// - Generates a commit message via the AI harness
+/// - Commits the change via the detected VCS (Git or Jujutsu)
 ///
 /// # Arguments
 /// - `id`: Optional change ID. If not provided, attempts to detect from environment
-/// - `auto`: If true, checks that all acceptance criteria are completed before marking done
+/// - `auto`: If true, checks acceptance criteria and commits via VCS (requires harness and VCS)
 /// - `force`: If true with --auto, bypasses acceptance criteria check
 use crate::commands::{print_info, print_success, resolve_id};
 use crate::harness::detect_harness;
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
-use anyhow::Result;
+use crate::vcs::detect_vcs_with_preference;
+use anyhow::{anyhow, Context, Result};
 
 pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
+
+    if auto {
+        detect_harness()
+            .ok_or_else(|| anyhow!("No AI harness detected. --auto requires a harness to generate commit messages."))?;
+
+        detect_vcs_with_preference()
+            .await?
+            .context("No version control system detected. --auto requires git or jujutsu.")?;
+    }
+
     let full_id = resolve_id(id).await?;
 
     let mut repo = ChangeRepository::open().await?;
 
     let change = repo.find_by_id(&full_id)
-        .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
+        .ok_or_else(|| anyhow!("Change '{}' not found", full_id))?;
 
     // Check if already done
     if change.status == Status::Done {
@@ -46,18 +56,30 @@ pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
         }
     }
 
+    // For --auto mode: get harness and vcs (already validated above)
+    let auto_commit = if auto {
+        let harness = detect_harness().expect("harness validated above");
+        let vcs = detect_vcs_with_preference()
+            .await
+            .expect("vcs detection should not fail")
+            .expect("vcs should be present (validated above)");
+        Some((harness, vcs))
+    } else {
+        None
+    };
+
     // Update status in the database - this always succeeds regardless of VCS/worktree
     repo.update_status(&full_id, Status::Done).await?;
 
     print_success(&format!("Marked change {} as done", full_id));
 
-    // Try to generate a commit message if a harness is available
-    // This is optional and works whether or not --isolate was used with 'start'
-    // The commit message is just displayed, not applied automatically
-    if let Some(harness) = detect_harness() {
+    // For --auto mode: generate commit message and commit via VCS
+    if let Some((harness, vcs)) = auto_commit {
+        print_info(&format!("Using {} for version control", vcs.name()));
         print_info("Generating commit message...");
         let msg = harness.generate_commit_msg(&full_id)?;
-        println!("\nProposed commit message:\n{}", msg);
+        vcs.commit(&msg)?;
+        print_success("Committed changes");
     }
 
     Ok(())

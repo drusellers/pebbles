@@ -35,7 +35,8 @@ pub async fn intake(file: Option<PathBuf>) -> Result<()> {
     let config_path = get_config_path()?;
     let config = Config::load(&config_path).await?;
 
-    let vcs = detect_vcs_with_preference(config.vcs.prefer)
+    let vcs = detect_vcs_with_preference()
+        .await?
         .context("No version control system detected (git or jujutsu)")?;
 
     let harness = detect_harness_with_preference(config.harness.prefer)

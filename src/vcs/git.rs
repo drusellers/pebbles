@@ -84,7 +84,8 @@ impl Vcs for Git {
     }
 
     fn commit(&self, message: &str) -> Result<()> {
-        run_cmd(Command::new("git").args(["commit", "-m", message]))?;
+        // -a flag stages all modified and deleted files before committing
+        run_cmd(Command::new("git").args(["commit", "-a", "-m", message]))?;
         Ok(())
     }
 }
