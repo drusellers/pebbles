@@ -1,5 +1,5 @@
 use crate::commands::{print_success, resolve_id};
-use crate::config::{get_config_path, Config};
+use crate::config::{Config, get_config_path};
 use crate::idish::IDish;
 use crate::models::{Event, EventType};
 use crate::repository::ChangeRepository;
@@ -10,7 +10,8 @@ pub async fn edit(id: Option<IDish>) -> Result<()> {
 
     let mut repo = ChangeRepository::open().await?;
 
-    let change = repo.find_by_id(&full_id)
+    let change = repo
+        .find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
     let config_path = get_config_path()?;

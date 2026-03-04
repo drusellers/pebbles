@@ -1,4 +1,4 @@
-use super::{find_workspace_parent, run_cmd, Vcs};
+use super::{Vcs, find_workspace_parent, run_cmd};
 use crate::id::Id;
 use anyhow::Result;
 use std::path::Path;

@@ -95,6 +95,9 @@ pub enum Commands {
     /// Show workspace status including change details
     Status,
 
+    /// Migrate legacy JSON storage to markdown files
+    Migrate,
+
     /// Edit a change in your editor
     #[command(next_help_heading = "Tasks")]
     Edit {

@@ -80,7 +80,7 @@ impl FromStr for IDish {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::Database;
+    use crate::db::{Database, StorageBackend};
     use crate::models::{Change, Priority, Status};
     use chrono::Utc;
     use std::path::PathBuf;
@@ -108,6 +108,8 @@ mod tests {
         Db {
             path: PathBuf::from("/tmp/test"),
             data: db,
+            backend: StorageBackend::Json,
+            invalid_changes: std::collections::HashMap::new(),
         }
     }
 

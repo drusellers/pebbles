@@ -17,7 +17,10 @@ pub async fn doctor() -> Result<()> {
         }
         _ => {
             println!("{}", "✗ not found".red());
-            println!("   {}", "Install from: https://github.com/martinvonz/jj".dimmed());
+            println!(
+                "   {}",
+                "Install from: https://github.com/martinvonz/jj".dimmed()
+            );
             all_good = false;
         }
     }
@@ -43,22 +46,34 @@ pub async fn doctor() -> Result<()> {
             // Verify the editor actually exists
             let parts: Vec<&str> = editor.split_whitespace().collect();
             let cmd = parts[0];
-            
+
             match Command::new("which").arg(cmd).output() {
                 Ok(output) if output.status.success() => {
                     println!("{}", format!("✓ {}", editor).green());
                 }
                 _ => {
-                    println!("{}", format!("⚠ {} (command not found in PATH)", editor).yellow());
-                    println!("   {}", format!("EDITOR is set to '{}' but command not found", cmd).dimmed());
+                    println!(
+                        "{}",
+                        format!("⚠ {} (command not found in PATH)", editor).yellow()
+                    );
+                    println!(
+                        "   {}",
+                        format!("EDITOR is set to '{}' but command not found", cmd).dimmed()
+                    );
                     all_good = false;
                 }
             }
         }
         Err(_) => {
             println!("{}", "⚠ not set".yellow());
-            println!("   {}", "Set EDITOR environment variable (e.g., export EDITOR=vim)".dimmed());
-            println!("   {}", "Will use default: vim (Unix) or notepad (Windows)".dimmed());
+            println!(
+                "   {}",
+                "Set EDITOR environment variable (e.g., export EDITOR=vim)".dimmed()
+            );
+            println!(
+                "   {}",
+                "Will use default: vim (Unix) or notepad (Windows)".dimmed()
+            );
         }
     }
 
@@ -81,7 +96,12 @@ pub async fn doctor() -> Result<()> {
     if all_good {
         println!("{}", "All systems ready! ✓".green().bold());
     } else {
-        println!("{}", "Some dependencies are missing. Please install them.".yellow().bold());
+        println!(
+            "{}",
+            "Some dependencies are missing. Please install them."
+                .yellow()
+                .bold()
+        );
     }
 
     Ok(())

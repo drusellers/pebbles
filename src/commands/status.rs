@@ -56,11 +56,11 @@ pub async fn status() -> Result<()> {
     } else {
         // Not in a workspace - show repository context
         println!("{} Not in a pebbles workspace.", "!".yellow().bold());
-        
+
         if let Ok(root) = crate::config::find_pebbles_root() {
             println!("\nRepository: {}", root.display().to_string().cyan());
         }
-        
+
         println!("VCS: {}", vcs.name());
 
         // Show available workspaces
@@ -78,10 +78,10 @@ pub async fn status() -> Result<()> {
 
             if !workspaces.is_empty() {
                 println!("\nAvailable workspaces:");
-                
+
                 // Get repo to fetch change titles
                 let repo = ChangeRepository::open().await.ok();
-                
+
                 for ws_id in workspaces {
                     if let Some(ref r) = repo {
                         if let Ok(id) = ws_id.parse::<crate::id::Id>() {
@@ -97,13 +97,17 @@ pub async fn status() -> Result<()> {
                         println!("  ws-{}", ws_id.cyan());
                     }
                 }
-                
-                println!("\nRun '{}' to enter a workspace.", 
-                    "pebbles work <id>".to_string().cyan());
+
+                println!(
+                    "\nRun '{}' to enter a workspace.",
+                    "pebbles work <id>".to_string().cyan()
+                );
             } else {
                 println!("\n{} No workspaces found.", "!".yellow());
-                println!("Run '{}' to create a workspace.", 
-                    "pebbles start --isolate <id>".to_string().cyan());
+                println!(
+                    "Run '{}' to create a workspace.",
+                    "pebbles start --isolate <id>".to_string().cyan()
+                );
             }
         }
     }
@@ -117,7 +121,10 @@ fn print_not_initialized() {
         "Error:".red().bold()
     );
     eprintln!();
-    eprintln!("Run '{}' to initialize a pebbles repository.", "pebbles init".cyan());
+    eprintln!(
+        "Run '{}' to initialize a pebbles repository.",
+        "pebbles init".cyan()
+    );
 }
 
 fn format_status(status: &str) -> String {

@@ -17,7 +17,8 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
 
     // Update title
     if let Some(title) = args.title {
-        let change = repo.find_by_id_mut(&full_id)
+        let change = repo
+            .find_by_id_mut(&full_id)
             .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
         let old_title = change.title.clone();
@@ -46,7 +47,8 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
             body
         };
 
-        let change = repo.find_by_id_mut(&full_id)
+        let change = repo
+            .find_by_id_mut(&full_id)
             .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
         change.update_body(body_content);
@@ -66,10 +68,12 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
     if args.edit {
         let body = edit_in_editor(
             &repo.find_by_id(&full_id).unwrap().body,
-            &crate::config::get_config_path()?
-        ).await?;
+            &crate::config::get_config_path()?,
+        )
+        .await?;
 
-        let change = repo.find_by_id_mut(&full_id)
+        let change = repo
+            .find_by_id_mut(&full_id)
             .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
         change.update_body(body);
@@ -89,7 +93,8 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
     if let Some(priority_arg) = args.priority {
         let priority: Priority = priority_arg.into();
 
-        let change = repo.find_by_id_mut(&full_id)
+        let change = repo
+            .find_by_id_mut(&full_id)
             .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
         let old_priority = change.priority.clone();
@@ -120,7 +125,8 @@ pub async fn update(args: UpdateArgs) -> Result<()> {
     if let Some(changelog_arg) = args.changelog {
         let changelog_type: crate::models::ChangelogType = changelog_arg.into();
 
-        let change = repo.find_by_id_mut(&full_id)
+        let change = repo
+            .find_by_id_mut(&full_id)
             .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
         let old_changelog = change.changelog_type.as_ref().map(|ct| ct.to_string());
@@ -168,7 +174,8 @@ async fn update_parent(
 ) -> Result<bool> {
     // First, gather all the information we need without holding any borrows
     let old_parent = {
-        let change = repo.find_by_id(full_id)
+        let change = repo
+            .find_by_id(full_id)
             .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
         change.parent.clone()
     };
@@ -203,7 +210,8 @@ async fn update_parent(
         Ok(true)
     } else {
         // Set new parent - resolve the IDish
-        let new_parent_id = parent.resolve(&repo.db)
+        let new_parent_id = parent
+            .resolve(&repo.db)
             .map_err(|e| anyhow::anyhow!("Invalid parent ID: {}", e))?;
 
         // Validate parent exists
@@ -279,7 +287,9 @@ async fn edit_in_editor(initial: &str, config_path: &std::path::Path) -> Result<
         anyhow::bail!("Editor exited with non-zero status");
     }
 
-    tokio::fs::read_to_string(&temp_path).await.context("Failed to read edited file")
+    tokio::fs::read_to_string(&temp_path)
+        .await
+        .context("Failed to read edited file")
 }
 
 /// Check if setting `child_id`'s parent to `parent_id` would create a cycle

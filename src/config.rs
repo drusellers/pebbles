@@ -62,13 +62,12 @@ pub struct HarnessConfig {
 impl Config {
     pub async fn load(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
-        
+
         if path.exists() {
             let content = tokio::fs::read_to_string(path)
                 .await
                 .context("Failed to read config file")?;
-            let config: Config = toml::from_str(&content)
-                .context("Failed to parse config file")?;
+            let config: Config = toml::from_str(&content).context("Failed to parse config file")?;
             Ok(config)
         } else {
             Ok(Self::default())
@@ -77,21 +76,20 @@ impl Config {
 
     pub async fn save(&self, path: impl AsRef<Path>) -> Result<()> {
         let path = path.as_ref();
-        
+
         // Ensure parent directory exists
         if let Some(parent) = path.parent() {
             tokio::fs::create_dir_all(parent)
                 .await
                 .context("Failed to create config directory")?;
         }
-        
-        let content = toml::to_string_pretty(self)
-            .context("Failed to serialize config")?;
-        
+
+        let content = toml::to_string_pretty(self).context("Failed to serialize config")?;
+
         tokio::fs::write(path, content)
             .await
             .context("Failed to write config file")?;
-        
+
         Ok(())
     }
 
@@ -100,37 +98,38 @@ impl Config {
         if let Some(ref cmd) = self.editor.command {
             return cmd.clone();
         }
-        
+
         // Check EDITOR environment variable
         if let Ok(editor) = std::env::var("EDITOR") {
             return editor;
         }
-        
+
         // Platform-specific defaults
         #[cfg(target_os = "windows")]
         return "notepad".to_string();
-        
+
         #[cfg(not(target_os = "windows"))]
         return "vim".to_string();
     }
 }
 
 pub fn find_pebbles_root() -> Result<PathBuf> {
-    let mut current = std::env::current_dir()
-        .context("Failed to get current directory")?;
-    
+    let mut current = std::env::current_dir().context("Failed to get current directory")?;
+
     loop {
         let pebbles_dir = current.join(".pebbles");
         if pebbles_dir.exists() {
             return Ok(current);
         }
-        
+
         if !current.pop() {
             break;
         }
     }
-    
-    Err(anyhow::anyhow!("Not in a pebbles repository. Run 'pebbles init' first."))
+
+    Err(anyhow::anyhow!(
+        "Not in a pebbles repository. Run 'pebbles init' first."
+    ))
 }
 
 pub fn get_pebbles_dir() -> Result<PathBuf> {

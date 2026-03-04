@@ -1,4 +1,4 @@
-use super::{check_binary, run_harness_command, Harness, HarnessContext};
+use super::{Harness, HarnessContext, check_binary, run_harness_command};
 use crate::id::Id;
 use anyhow::{Context, Result};
 use std::process::Command;

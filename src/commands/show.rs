@@ -1,26 +1,57 @@
-use crate::commands::{resolve_id, format_id_with_unique_prefix};
+use crate::commands::{format_id_with_unique_prefix, resolve_id};
 use crate::idish::IDish;
 use crate::repository::ChangeRepository;
 use anyhow::Result;
 use colored::Colorize;
 
 pub async fn show(id: Option<IDish>) -> Result<()> {
-    let full_id = resolve_id(id).await?;
-
     let repo = ChangeRepository::open().await?;
 
-    let change = repo.find_by_id(&full_id)
-        .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
+    let full_id = match id {
+        Some(idish) => match idish.resolve(&repo.db) {
+            Ok(id) => id,
+            Err(err) => {
+                if let Some(invalid_id) = repo.resolve_invalid_idish(&idish)?
+                    && let Some(invalid) = repo.invalid_change_by_id(&invalid_id)
+                {
+                    println!("\n{}", "Invalid change file".red().bold());
+                    println!("  id: {}", invalid.id.to_string().cyan().bold());
+                    println!("  file: {}", invalid.path.display());
+                    println!("  reason: {}", invalid.error.red());
+                    println!(
+                        "  fix: correct the markdown/frontmatter and re-run `pebbles show {}`",
+                        invalid.id
+                    );
+                    println!();
+                    return Ok(());
+                }
+                return Err(err);
+            }
+        },
+        None => resolve_id(None).await?,
+    };
+
+    let change = repo.find_by_id(&full_id).ok_or_else(|| {
+        if let Some(invalid) = repo.invalid_change_by_id(&full_id) {
+            anyhow::anyhow!(
+                "Change '{}' has invalid markdown at {}: {}",
+                full_id,
+                invalid.path.display(),
+                invalid.error
+            )
+        } else {
+            anyhow::anyhow!("Change '{}' not found", full_id)
+        }
+    })?;
 
     // Get all change IDs to calculate unique prefix
     let all_changes = repo.list(None, None, None, true);
-    let all_ids: Vec<&str> = all_changes.iter()
-        .map(|c| c.id.as_str())
-        .collect();
+    let all_ids: Vec<&str> = all_changes.iter().map(|c| c.id.as_str()).collect();
 
     // Print header
     println!("\n{}", "═".repeat(60).dimmed());
-    println!("{} {} {}",
+    println!(
+        "{} {} {}",
         format_id_with_unique_prefix(change.id.as_str(), &all_ids),
         "─".dimmed(),
         change.title.white().bold()

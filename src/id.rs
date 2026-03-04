@@ -43,7 +43,7 @@ impl Id {
     }
 
     pub fn generate() -> Self {
-        use rand::{thread_rng, Rng};
+        use rand::{Rng, thread_rng};
         let mut rng = thread_rng();
         let id: String = (0..4)
             .map(|_| {

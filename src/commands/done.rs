@@ -18,13 +18,15 @@ use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 
 pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
-
     if auto {
-        detect_harness()
-            .ok_or_else(|| anyhow!("No AI harness detected. --auto requires a harness to generate commit messages."))?;
+        detect_harness().ok_or_else(|| {
+            anyhow!(
+                "No AI harness detected. --auto requires a harness to generate commit messages."
+            )
+        })?;
 
         detect_vcs_with_preference()
             .await?
@@ -35,7 +37,8 @@ pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
 
     let mut repo = ChangeRepository::open().await?;
 
-    let change = repo.find_by_id(&full_id)
+    let change = repo
+        .find_by_id(&full_id)
         .ok_or_else(|| anyhow!("Change '{}' not found", full_id))?;
 
     // Check if already done

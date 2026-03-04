@@ -1,9 +1,11 @@
 use crate::id::Id;
+use crate::markdown_store::{parse_change_file, write_change_file_to_path};
 use crate::models::{Change, Event};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use tracing::warn;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Database {
@@ -14,43 +16,201 @@ pub struct Database {
 pub struct Db {
     pub(crate) path: PathBuf,
     pub(crate) data: Database,
+    pub(crate) backend: StorageBackend,
+    pub(crate) invalid_changes: HashMap<Id, InvalidChangeFile>,
+}
+
+#[derive(Debug, Clone)]
+pub struct InvalidChangeFile {
+    pub id: Id,
+    pub path: PathBuf,
+    pub error: String,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(crate) enum StorageBackend {
+    Json,
+    Markdown,
 }
 
 impl Db {
     pub async fn open(path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref().to_path_buf();
-        
+
+        let pebbles_dir = path
+            .parent()
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| PathBuf::from(".pebbles"));
+        let changes_dir = pebbles_dir.join("changes");
+
+        if changes_dir.exists() {
+            let (data, invalid) = Self::load_markdown_data(&changes_dir).await?;
+            return Ok(Self {
+                path,
+                data,
+                backend: StorageBackend::Markdown,
+                invalid_changes: invalid,
+            });
+        }
+
         if path.exists() {
             let content = tokio::fs::read_to_string(&path)
                 .await
                 .context("Failed to read database file")?;
-            let data: Database = serde_json::from_str(&content)
-                .context("Failed to parse database file")?;
-            Ok(Self { path, data })
+            let data: Database =
+                serde_json::from_str(&content).context("Failed to parse database file")?;
+            Ok(Self {
+                path,
+                data,
+                backend: StorageBackend::Json,
+                invalid_changes: HashMap::new(),
+            })
         } else {
             Ok(Self {
                 path,
                 data: Database::default(),
+                backend: StorageBackend::Markdown,
+                invalid_changes: HashMap::new(),
             })
         }
     }
 
     pub async fn save(&self) -> Result<()> {
-        let content = serde_json::to_string_pretty(&self.data)
-            .context("Failed to serialize database")?;
-        
+        if matches!(self.backend, StorageBackend::Markdown) {
+            return self.save_markdown().await;
+        }
+
+        let content =
+            serde_json::to_string_pretty(&self.data).context("Failed to serialize database")?;
+
         // Ensure parent directory exists
         if let Some(parent) = self.path.parent() {
             tokio::fs::create_dir_all(parent)
                 .await
                 .context("Failed to create database directory")?;
         }
-        
+
         tokio::fs::write(&self.path, content)
             .await
             .context("Failed to write database file")?;
-        
+
         Ok(())
+    }
+
+    async fn save_markdown(&self) -> Result<()> {
+        let pebbles_dir = self
+            .path
+            .parent()
+            .map(ToOwned::to_owned)
+            .unwrap_or_else(|| PathBuf::from(".pebbles"));
+        let changes_dir = pebbles_dir.join("changes");
+
+        tokio::fs::create_dir_all(&changes_dir)
+            .await
+            .context("Failed to create changes directory")?;
+
+        for change in self.data.changes.values() {
+            let path = changes_dir.join(format!("{}.md", change.id));
+            let events = self
+                .data
+                .events
+                .iter()
+                .filter(|event| event.change_id == change.id)
+                .cloned()
+                .collect::<Vec<_>>();
+            write_change_file_to_path(&path, change, &events).await?;
+        }
+
+        let expected_files: HashSet<String> = self
+            .data
+            .changes
+            .keys()
+            .map(|id| format!("{}.md", id))
+            .collect();
+
+        let mut entries = tokio::fs::read_dir(&changes_dir)
+            .await
+            .context("Failed to read changes directory")?;
+        while let Some(entry) = entries
+            .next_entry()
+            .await
+            .context("Failed to read directory entry")?
+        {
+            let file_name = entry.file_name().to_string_lossy().to_string();
+            if file_name.ends_with(".md") && !expected_files.contains(&file_name) {
+                tokio::fs::remove_file(entry.path())
+                    .await
+                    .with_context(|| format!("Failed to remove stale file {}", file_name))?;
+            }
+        }
+
+        Ok(())
+    }
+
+    async fn load_markdown_data(
+        changes_dir: &Path,
+    ) -> Result<(Database, HashMap<Id, InvalidChangeFile>)> {
+        let mut data = Database::default();
+        let mut invalid_changes = HashMap::new();
+        let mut entries = tokio::fs::read_dir(changes_dir)
+            .await
+            .with_context(|| format!("Failed to read {}", changes_dir.display()))?;
+
+        while let Some(entry) = entries
+            .next_entry()
+            .await
+            .context("Failed to read directory entry")?
+        {
+            let path = entry.path();
+            if path.extension().and_then(|ext| ext.to_str()) != Some("md") {
+                continue;
+            }
+
+            let stem = match path.file_stem().and_then(|s| s.to_str()) {
+                Some(stem) => stem,
+                None => continue,
+            };
+            let id = match Id::new(stem) {
+                Ok(id) => id,
+                Err(_) => continue,
+            };
+
+            let content = tokio::fs::read_to_string(&path)
+                .await
+                .with_context(|| format!("Failed to read {}", path.display()))?;
+
+            let parsed = match parse_change_file(&id, &content) {
+                Ok(parsed) => parsed,
+                Err(err) => {
+                    warn!(
+                        file = %path.display(),
+                        change_id = %id,
+                        error = %err,
+                        "Invalid markdown change file"
+                    );
+                    invalid_changes.insert(
+                        id.clone(),
+                        InvalidChangeFile {
+                            id,
+                            path: path.clone(),
+                            error: err.to_string(),
+                        },
+                    );
+                    continue;
+                }
+            };
+
+            if let Some(normalized) = parsed.normalized_content {
+                tokio::fs::write(&path, normalized)
+                    .await
+                    .with_context(|| format!("Failed to normalize {}", path.display()))?;
+            }
+
+            data.events.extend(parsed.events);
+            data.changes.insert(id, parsed.change);
+        }
+
+        Ok((data, invalid_changes))
     }
 
     pub fn get_change(&self, id: &Id) -> Option<&Change> {
@@ -82,22 +242,23 @@ impl Db {
         self.data.events.push(event);
     }
 
-    pub fn list_changes(&self,
+    pub fn list_changes(
+        &self,
         status: Option<&str>,
         priority: Option<&str>,
         changelog: Option<&str>,
         include_done: bool,
     ) -> Vec<&Change> {
         let mut changes: Vec<&Change> = self.data.changes.values().collect();
-        
+
         if let Some(status) = status {
             changes.retain(|c| c.status.to_string() == status);
         }
-        
+
         if let Some(priority) = priority {
             changes.retain(|c| c.priority.to_string() == priority);
         }
-        
+
         if let Some(changelog) = changelog {
             changes.retain(|c| {
                 c.changelog_type
@@ -106,19 +267,24 @@ impl Db {
                     .unwrap_or(false)
             });
         }
-        
+
         if !include_done {
             changes.retain(|c| !matches!(c.status, crate::models::Status::Done));
         }
-        
+
         changes
     }
 
     pub fn get_events_for_change(&self, change_id: &Id) -> Vec<&Event> {
-        self.data.events
+        self.data
+            .events
             .iter()
             .filter(|e| e.change_id == *change_id)
             .collect()
+    }
+
+    pub fn list_invalid_changes(&self) -> Vec<&InvalidChangeFile> {
+        self.invalid_changes.values().collect()
     }
 
     pub fn delete_change(&mut self, id: &Id) -> Result<()> {
@@ -132,14 +298,18 @@ impl Db {
     // Case-insensitive exact match
     pub fn find_by_id_case_insensitive(&self, id: &str) -> Option<&Change> {
         let id_lower = id.to_lowercase();
-        self.data.changes.values()
+        self.data
+            .changes
+            .values()
             .find(|c| c.id.to_lowercase() == id_lower)
     }
 
     // Case-insensitive prefix search
     pub fn find_by_prefix_case_insensitive(&self, prefix: &str) -> Vec<&Change> {
         let prefix_lower = prefix.to_lowercase();
-        self.data.changes.values()
+        self.data
+            .changes
+            .values()
             .filter(|c| c.id.to_lowercase().starts_with(&prefix_lower))
             .collect()
     }
@@ -178,6 +348,8 @@ mod tests {
         let db_wrapper = Db {
             path: PathBuf::from("/tmp/test"),
             data: db,
+            backend: StorageBackend::Json,
+            invalid_changes: HashMap::new(),
         };
 
         // Should find with exact case
@@ -192,13 +364,24 @@ mod tests {
     #[test]
     fn test_find_by_prefix_case_insensitive() {
         let mut db = Database::default();
-        db.changes.insert(Id::new("abc1").unwrap(), create_test_change("abc1", "Change 1"));
-        db.changes.insert(Id::new("abc2").unwrap(), create_test_change("abc2", "Change 2"));
-        db.changes.insert(Id::new("def1").unwrap(), create_test_change("def1", "Change 3"));
+        db.changes.insert(
+            Id::new("abc1").unwrap(),
+            create_test_change("abc1", "Change 1"),
+        );
+        db.changes.insert(
+            Id::new("abc2").unwrap(),
+            create_test_change("abc2", "Change 2"),
+        );
+        db.changes.insert(
+            Id::new("def1").unwrap(),
+            create_test_change("def1", "Change 3"),
+        );
 
         let db_wrapper = Db {
             path: PathBuf::from("/tmp/test"),
             data: db,
+            backend: StorageBackend::Json,
+            invalid_changes: HashMap::new(),
         };
 
         // Should find multiple with prefix "ab" (case insensitive)
@@ -225,13 +408,24 @@ mod tests {
     #[test]
     fn test_find_by_prefix_single_char() {
         let mut db = Database::default();
-        db.changes.insert(Id::new("abc1").unwrap(), create_test_change("abc1", "Change 1"));
-        db.changes.insert(Id::new("abc2").unwrap(), create_test_change("abc2", "Change 2"));
-        db.changes.insert(Id::new("def1").unwrap(), create_test_change("def1", "Change 3"));
+        db.changes.insert(
+            Id::new("abc1").unwrap(),
+            create_test_change("abc1", "Change 1"),
+        );
+        db.changes.insert(
+            Id::new("abc2").unwrap(),
+            create_test_change("abc2", "Change 2"),
+        );
+        db.changes.insert(
+            Id::new("def1").unwrap(),
+            create_test_change("def1", "Change 3"),
+        );
 
         let db_wrapper = Db {
             path: PathBuf::from("/tmp/test"),
             data: db,
+            backend: StorageBackend::Json,
+            invalid_changes: HashMap::new(),
         };
 
         // Should find multiple with single char prefix
@@ -245,11 +439,16 @@ mod tests {
     #[test]
     fn test_delete_change() {
         let mut db = Database::default();
-        db.changes.insert(Id::new("abc1").unwrap(), create_test_change("abc1", "Change 1"));
+        db.changes.insert(
+            Id::new("abc1").unwrap(),
+            create_test_change("abc1", "Change 1"),
+        );
 
         let mut db_wrapper = Db {
             path: PathBuf::from("/tmp/test"),
             data: db,
+            backend: StorageBackend::Json,
+            invalid_changes: HashMap::new(),
         };
 
         // Should delete existing change

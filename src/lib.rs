@@ -5,6 +5,7 @@ pub mod db;
 pub mod harness;
 pub mod id;
 pub mod idish;
+pub mod markdown_store;
 pub mod models;
 pub mod repository;
 pub mod table;

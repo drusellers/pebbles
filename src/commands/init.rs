@@ -2,7 +2,6 @@ use anyhow::{Context, Result};
 
 use crate::commands::print_success;
 use crate::config::{Config, find_pebbles_root};
-use crate::db::Db;
 use crate::template;
 use crate::vcs::find_repo_root;
 
@@ -13,11 +12,10 @@ pub async fn init() -> Result<()> {
     }
 
     // Find git/jj root
-    let repo_root = find_repo_root()
-        .context("Not in a git or jujutsu repository")?;
+    let repo_root = find_repo_root().context("Not in a git or jujutsu repository")?;
 
     let pebbles_dir = repo_root.join(".pebbles");
-    let db_path = pebbles_dir.join("db.json");
+    let changes_dir = pebbles_dir.join("changes");
     let config_path = pebbles_dir.join("config.toml");
 
     // Create .pebbles directory
@@ -25,9 +23,9 @@ pub async fn init() -> Result<()> {
         .await
         .context("Failed to create .pebbles directory")?;
 
-    // Create empty database
-    let db = Db::open(&db_path).await?;
-    db.save().await?;
+    tokio::fs::create_dir_all(&changes_dir)
+        .await
+        .context("Failed to create .pebbles/changes directory")?;
 
     // Create default config
     let config = Config::default();
@@ -38,10 +36,7 @@ pub async fn init() -> Result<()> {
         .await
         .context("Failed to write OpenCode command templates")?;
 
-    print_success(&format!(
-        "Initialized pebbles in {}",
-        pebbles_dir.display()
-    ));
+    print_success(&format!("Initialized pebbles in {}", pebbles_dir.display()));
 
     Ok(())
 }

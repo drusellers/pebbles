@@ -9,7 +9,8 @@ pub async fn approve(id: IDish) -> Result<()> {
 
     let full_id = id.resolve(&repo.db)?;
 
-    let change = repo.find_by_id(&full_id)
+    let change = repo
+        .find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
     // Check current status

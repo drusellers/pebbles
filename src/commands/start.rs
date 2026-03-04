@@ -1,6 +1,6 @@
 use crate::commands::{print_info, print_success};
-use crate::config::{get_config_path, Config};
-use crate::harness::{detect_harness_with_preference, HarnessContext};
+use crate::config::{Config, get_config_path};
+use crate::harness::{HarnessContext, detect_harness_with_preference};
 use crate::idish::IDish;
 use crate::models::Status;
 use crate::repository::ChangeRepository;
@@ -8,19 +8,27 @@ use crate::vcs::detect_vcs_with_preference;
 use anyhow::{Context, Result};
 use std::path::PathBuf;
 
-pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_permissions: bool) -> Result<()> {
+pub async fn start(
+    id: IDish,
+    isolate: bool,
+    wait: bool,
+    print_logs: bool,
+    skip_permissions: bool,
+) -> Result<()> {
     let mut repo = ChangeRepository::open().await?;
 
     let full_id = id.resolve(&repo.db)?;
 
-    let change = repo.find_by_id(&full_id)
+    let change = repo
+        .find_by_id(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
     match change.status {
         Status::Draft => {
             anyhow::bail!(
                 "Change '{}' is in Draft status. Approve it first with 'pebbles approve {}'",
-                full_id, full_id
+                full_id,
+                full_id
             );
         }
         Status::Approved | Status::InProgress => {}
@@ -44,7 +52,10 @@ pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_
 
     let work_dir: PathBuf = if isolate {
         let workspace_path = vcs.create_workspace(&full_id)?;
-        print_success(&format!("Created workspace at {}", workspace_path.display()));
+        print_success(&format!(
+            "Created workspace at {}",
+            workspace_path.display()
+        ));
         workspace_path
     } else {
         std::env::current_dir()?
@@ -62,7 +73,11 @@ pub async fn start(id: IDish, isolate: bool, wait: bool, print_logs: bool, skip_
             full_id
         ));
     } else {
-        print_info(&format!("Launching {} for change '{}'", harness.name(), full_id));
+        print_info(&format!(
+            "Launching {} for change '{}'",
+            harness.name(),
+            full_id
+        ));
     }
 
     let ctx = HarnessContext::new(vcs.name(), work_dir)

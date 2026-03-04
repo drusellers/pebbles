@@ -8,6 +8,7 @@ mod db;
 mod harness;
 mod id;
 mod idish;
+mod markdown_store;
 mod models;
 mod repository;
 mod table;
@@ -27,7 +28,14 @@ async fn main() -> Result<()> {
         Commands::Show { id } => commands::show(id).await,
         Commands::Update(args) => commands::update(args).await,
         Commands::Approve { id } => commands::approve(id).await,
-        Commands::Start { id, isolate, wait, print_logs, skip_permissions, verbose } => {
+        Commands::Start {
+            id,
+            isolate,
+            wait,
+            print_logs,
+            skip_permissions,
+            verbose,
+        } => {
             if verbose {
                 tracing_subscriber::fmt()
                     .with_max_level(tracing::Level::TRACE)
@@ -41,12 +49,19 @@ async fn main() -> Result<()> {
         Commands::Log { id } => commands::log(id).await,
         Commands::Current => commands::current().await,
         Commands::Status => commands::status().await,
+        Commands::Migrate => commands::migrate().await,
         Commands::Edit { id } => commands::edit(id).await,
         Commands::Completions { shell } => commands::completions(shell),
         Commands::Doctor => commands::doctor().await,
         Commands::Delete { id, force } => commands::delete(id, force).await,
-        Commands::Block { change_id, dependency_id } => commands::block(change_id, dependency_id).await,
-        Commands::Unblock { change_id, dependency_id } => commands::unblock(change_id, dependency_id).await,
+        Commands::Block {
+            change_id,
+            dependency_id,
+        } => commands::block(change_id, dependency_id).await,
+        Commands::Unblock {
+            change_id,
+            dependency_id,
+        } => commands::unblock(change_id, dependency_id).await,
         Commands::Plan { id, wait } => commands::plan(id, wait).await,
         Commands::Intake { file } => commands::intake(file).await,
     }

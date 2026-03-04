@@ -218,7 +218,7 @@ fn strip_ansi(s: &str) -> String {
             // Skip the escape sequence
             if chars.peek() == Some(&'[') {
                 chars.next(); // skip '['
-                              // Skip until we find a letter (end of sequence)
+                // Skip until we find a letter (end of sequence)
                 while let Some(c) = chars.peek() {
                     if c.is_ascii_alphabetic() {
                         chars.next();

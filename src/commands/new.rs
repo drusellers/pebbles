@@ -6,15 +6,15 @@ use crate::models::{Change, Priority};
 use crate::repository::ChangeRepository;
 use crate::template;
 use anyhow::{Context, Result};
-use rand::{thread_rng, Rng};
+use rand::{Rng, thread_rng};
 const ALPHANUMERIC: &str = "abcdefghijklmnopqrstuvwxyz0123456789";
 
 pub async fn new(args: NewArgs) -> Result<()> {
     let mut repo = ChangeRepository::open().await?;
-    
+
     // Generate unique ID
     let id = generate_unique_id(&repo).await?;
-    
+
     // Get title
     let title = if let Some(title) = args.title {
         title
@@ -24,19 +24,20 @@ pub async fn new(args: NewArgs) -> Result<()> {
             .interact_text()
             .context("Failed to read title")?
     };
-    
+
     let priority: Priority = args.priority.into();
-    
+
     // Create change
     let mut change = Change::new(id.clone(), title, priority);
-    
+
     // Set parent if provided
     if let Some(parent) = args.parent {
-        let parent_id = parent.resolve(&repo.db)
+        let parent_id = parent
+            .resolve(&repo.db)
             .map_err(|e| anyhow::anyhow!("Invalid parent ID: {}", e))?;
         change.parent = Some(parent_id);
     }
-    
+
     // Handle body
     let template_content = template::get_new_issue_template();
     let body = if args.edit {
@@ -47,22 +48,26 @@ pub async fn new(args: NewArgs) -> Result<()> {
         edit_in_editor(template_content, &get_config_path()?).await?
     };
     change.body = body;
-    
+
     // Save
     repo.create(change).await?;
-    
+
     // Get all IDs to calculate unique prefix for the new ID
     let all_changes = repo.list(None, None, None, true);
     let all_ids: Vec<String> = all_changes.iter().map(|c| c.id.to_string()).collect();
     let all_id_refs: Vec<&str> = all_ids.iter().map(|s| s.as_str()).collect();
-    
+
     let formatted_id = format_id_with_unique_prefix(&id.to_string(), &all_id_refs);
-    print_success(&format!("Created change {}: {}", formatted_id, repo.find_by_id(&id).unwrap().title));
-    
+    print_success(&format!(
+        "Created change {}: {}",
+        formatted_id,
+        repo.find_by_id(&id).unwrap().title
+    ));
+
     if args.edit {
         print_info("Use 'pebbles edit <id>' to edit the body later");
     }
-    
+
     Ok(())
 }
 
@@ -78,7 +83,8 @@ fn generate_id() -> String {
 
 async fn generate_unique_id(repo: &ChangeRepository) -> Result<Id> {
     for _ in 0..100 {
-        let id = Id::new(generate_id()).map_err(|e| anyhow::anyhow!("Failed to generate ID: {}", e))?;
+        let id =
+            Id::new(generate_id()).map_err(|e| anyhow::anyhow!("Failed to generate ID: {}", e))?;
         if repo.find_by_id(&id).is_none() {
             return Ok(id);
         }
@@ -88,27 +94,27 @@ async fn generate_unique_id(repo: &ChangeRepository) -> Result<Id> {
 
 async fn edit_in_editor(initial: &str, config_path: &std::path::Path) -> Result<String> {
     use crate::config::Config;
-    
+
     let config = Config::load(config_path).await?;
     let editor = config.get_editor();
-    
+
     let temp_file = tempfile::NamedTempFile::new()?;
     let temp_path = temp_file.path().to_path_buf();
-    
+
     // Write initial content
     tokio::fs::write(&temp_path, initial).await?;
-    
+
     // Launch editor
     let status = std::process::Command::new("sh")
         .arg("-c")
         .arg(format!("{} {}", editor, temp_path.display()))
         .status()
         .context("Failed to launch editor")?;
-    
+
     if !status.success() {
         anyhow::bail!("Editor exited with non-zero status");
     }
-    
+
     // Read back
     let content = tokio::fs::read_to_string(&temp_path).await?;
     Ok(content)

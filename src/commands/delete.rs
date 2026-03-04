@@ -10,7 +10,9 @@ pub async fn delete(id: IDish, force: bool) -> Result<()> {
     let full_id = id.resolve(&repo.db)?;
 
     // Check if change exists
-    let change = repo.db.get_change(&full_id)
+    let change = repo
+        .db
+        .get_change(&full_id)
         .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
 
     // Confirm deletion unless --force
@@ -22,7 +24,7 @@ pub async fn delete(id: IDish, force: bool) -> Result<()> {
             ))
             .default(false)
             .interact()?;
-        
+
         if !confirm {
             println!("Deletion cancelled.");
             return Ok(());

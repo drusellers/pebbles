@@ -1,4 +1,4 @@
-use crate::config::{get_config_path, Config};
+use crate::config::{Config, get_config_path};
 use crate::id::Id;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -46,7 +46,7 @@ pub fn detect_vcs() -> Option<Box<dyn Vcs>> {
 pub async fn detect_vcs_with_preference() -> Result<Option<Box<dyn Vcs>>> {
     let config_path = get_config_path()?;
     let config = Config::load(&config_path).await?;
-    
+
     match config.vcs.prefer {
         VcsPreference::Git => {
             let git = git::Git;

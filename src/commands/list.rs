@@ -1,4 +1,5 @@
 use crate::cli::ListArgs;
+use crate::db::InvalidChangeFile;
 use crate::id::Id;
 use crate::models::{Change, Status};
 use crate::repository::ChangeRepository;
@@ -15,10 +16,18 @@ pub async fn list(args: ListArgs) -> Result<()> {
     let changelog = args.changelog.as_deref();
 
     let changes = repo.list(status, priority, changelog, args.all);
+    let invalid_changes = repo.invalid_changes();
 
-    if changes.is_empty() {
+    if changes.is_empty() && invalid_changes.is_empty() {
         println!("No changes found.");
         return Ok(());
+    }
+
+    if !invalid_changes.is_empty() {
+        eprintln!(
+            "warning: {} invalid change file(s) found; showing parse issues in list",
+            invalid_changes.len()
+        );
     }
 
     // Calculate unique prefixes for IDs based on ALL changes (like jj)
@@ -29,10 +38,10 @@ pub async fn list(args: ListArgs) -> Result<()> {
 
     if args.flat {
         // Flat list mode - use bordered table
-        render_flat_list(changes, &id_prefixes, &args)?;
+        render_flat_list(changes, &invalid_changes, &id_prefixes, &args)?;
     } else {
         // Tree mode - use borderless table with tree structure
-        render_tree_view(changes, &id_prefixes, &args)?;
+        render_tree_view(changes, &invalid_changes, &id_prefixes, &args)?;
     }
 
     Ok(())
@@ -40,6 +49,7 @@ pub async fn list(args: ListArgs) -> Result<()> {
 
 fn render_flat_list(
     mut changes: Vec<&Change>,
+    invalid_changes: &[&InvalidChangeFile],
     id_prefixes: &HashMap<Id, usize>,
     args: &ListArgs,
 ) -> Result<()> {
@@ -52,11 +62,7 @@ fn render_flat_list(
             _ => a.created_at.cmp(&b.created_at),
         };
 
-        if args.reverse {
-            cmp.reverse()
-        } else {
-            cmp
-        }
+        if args.reverse { cmp.reverse() } else { cmp }
     });
 
     // Create table with borders
@@ -75,6 +81,10 @@ fn render_flat_list(
         table.add_row(row);
     }
 
+    for invalid in invalid_changes {
+        table.add_row(format_invalid_row(invalid));
+    }
+
     table.print();
 
     Ok(())
@@ -82,12 +92,12 @@ fn render_flat_list(
 
 fn render_tree_view(
     changes: Vec<&Change>,
+    invalid_changes: &[&InvalidChangeFile],
     id_prefixes: &HashMap<Id, usize>,
     args: &ListArgs,
 ) -> Result<()> {
     // Create a map of ID -> change for quick lookup (needed for completion counts)
-    let change_map: HashMap<Id, &Change> =
-        changes.iter().map(|c| (c.id.clone(), *c)).collect();
+    let change_map: HashMap<Id, &Change> = changes.iter().map(|c| (c.id.clone(), *c)).collect();
 
     // Build tree structure
     let tree = build_tree_structure(&changes, &change_map, args)?;
@@ -134,9 +144,30 @@ fn render_tree_view(
         table.add_row(row);
     }
 
+    for invalid in invalid_changes {
+        table.add_row(format_invalid_row(invalid));
+    }
+
     table.print();
 
     Ok(())
+}
+
+fn format_invalid_row(invalid: &InvalidChangeFile) -> Vec<String> {
+    vec![
+        invalid.id.to_string().cyan().bold().to_string(),
+        String::new(),
+        String::new(),
+        String::new(),
+        String::new(),
+        format!(
+            "[invalid markdown] {} ({})",
+            invalid.path.display(),
+            invalid.error
+        )
+        .red()
+        .to_string(),
+    ]
 }
 
 /// Tree node structure
@@ -256,11 +287,7 @@ fn sort_changes(changes: &mut Vec<&Change>, sort_by: &str, reverse: bool) {
             _ => a.created_at.cmp(&b.created_at),
         };
 
-        if reverse {
-            cmp.reverse()
-        } else {
-            cmp
-        }
+        if reverse { cmp.reverse() } else { cmp }
     });
 }
 
@@ -384,7 +411,7 @@ fn format_age(datetime: &chrono::DateTime<chrono::Utc>) -> String {
 /// Returns a map of ID -> prefix length needed to be unique
 fn calculate_unique_prefixes(ids: &[Id]) -> HashMap<Id, usize> {
     let mut result = HashMap::new();
-        let id_strings: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
+    let id_strings: Vec<String> = ids.iter().map(|id| id.to_string()).collect();
 
     for id in ids {
         let id_str = id.as_str();
@@ -479,7 +506,11 @@ mod tests {
 
         // Full ID should be the whole thing
         let result = format_id_with_prefix(id, 6);
-        assert!(result.contains("abc123"), "Should contain full ID: {}", result);
+        assert!(
+            result.contains("abc123"),
+            "Should contain full ID: {}",
+            result
+        );
 
         // Partial should split into prefix and rest
         let result = format_id_with_prefix(id, 3);

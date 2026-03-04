@@ -1,6 +1,6 @@
 use crate::commands::{print_info, resolve_id};
-use crate::config::{get_config_path, Config};
-use crate::harness::{detect_harness_with_preference, HarnessContext};
+use crate::config::{Config, get_config_path};
+use crate::harness::{HarnessContext, detect_harness_with_preference};
 use crate::idish::IDish;
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
@@ -71,7 +71,15 @@ pub async fn plan(id: Option<IDish>, wait: bool) -> Result<()> {
         .collect();
 
     if !all_instructions.is_empty() {
-        println!("\n{}", format!("🤖 {} agent instruction(s) embedded", all_instructions.len()).yellow().dimmed());
+        println!(
+            "\n{}",
+            format!(
+                "🤖 {} agent instruction(s) embedded",
+                all_instructions.len()
+            )
+            .yellow()
+            .dimmed()
+        );
     }
 
     if !wait {
@@ -81,7 +89,11 @@ pub async fn plan(id: Option<IDish>, wait: bool) -> Result<()> {
             full_id
         ));
     } else {
-        print_info(&format!("Launching {} for change '{}'", harness.name(), full_id));
+        print_info(&format!(
+            "Launching {} for change '{}'",
+            harness.name(),
+            full_id
+        ));
     }
 
     let ctx = HarnessContext::new(vcs.name(), env::current_dir()?)

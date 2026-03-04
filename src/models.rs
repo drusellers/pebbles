@@ -1,6 +1,6 @@
 use crate::id::Id;
 use chrono::{DateTime, Utc};
-use serde::{de::Visitor, Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de::Visitor};
 use std::fmt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -262,6 +262,18 @@ impl ChangelogType {
     }
 }
 
+impl Priority {
+    pub fn from_string(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "low" => Some(Priority::Low),
+            "medium" => Some(Priority::Medium),
+            "high" => Some(Priority::High),
+            "critical" => Some(Priority::Critical),
+            _ => None,
+        }
+    }
+}
+
 impl From<crate::cli::PriorityArg> for Priority {
     fn from(p: crate::cli::PriorityArg) -> Self {
         match p {
@@ -320,4 +332,48 @@ pub enum EventType {
     DependencyRemoved,
     ScratchpadAppended,
     ParentChanged,
+}
+
+impl fmt::Display for EventType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            EventType::Created => "created",
+            EventType::StatusChanged => "status_changed",
+            EventType::Updated => "updated",
+            EventType::PriorityChanged => "priority_changed",
+            EventType::ChangelogTypeChanged => "changelog_type_changed",
+            EventType::DependencyAdded => "dependency_added",
+            EventType::DependencyRemoved => "dependency_removed",
+            EventType::ScratchpadAppended => "scratchpad_appended",
+            EventType::ParentChanged => "parent_changed",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl EventType {
+    pub fn from_string(s: &str) -> Option<Self> {
+        match s.to_lowercase().as_str() {
+            "created" => Some(EventType::Created),
+            "statuschanged" | "status_changed" | "status-changed" => Some(EventType::StatusChanged),
+            "updated" => Some(EventType::Updated),
+            "prioritychanged" | "priority_changed" | "priority-changed" => {
+                Some(EventType::PriorityChanged)
+            }
+            "changelogtypechanged" | "changelog_type_changed" | "changelog-type-changed" => {
+                Some(EventType::ChangelogTypeChanged)
+            }
+            "dependencyadded" | "dependency_added" | "dependency-added" => {
+                Some(EventType::DependencyAdded)
+            }
+            "dependencyremoved" | "dependency_removed" | "dependency-removed" => {
+                Some(EventType::DependencyRemoved)
+            }
+            "scratchpadappended" | "scratchpad_appended" | "scratchpad-appended" => {
+                Some(EventType::ScratchpadAppended)
+            }
+            "parentchanged" | "parent_changed" | "parent-changed" => Some(EventType::ParentChanged),
+            _ => None,
+        }
+    }
 }

@@ -2,27 +2,26 @@ use crate::vcs::detect_vcs;
 use anyhow::{Context, Result};
 
 pub async fn current() -> Result<()> {
-    let vcs = detect_vcs()
-        .context("No version control system detected")?;
-    
+    let vcs = detect_vcs().context("No version control system detected")?;
+
     if let Some(id) = vcs.current_workspace_id() {
         println!("{}", id);
     } else {
         print_not_in_workspace();
         std::process::exit(1);
     }
-    
+
     Ok(())
 }
 
 fn print_not_in_workspace() {
     use colored::Colorize;
-    
+
     eprintln!("{} Not in a pebbles workspace.", "!".yellow());
-    
+
     if crate::config::get_db_path().is_ok() {
         eprintln!("\nYou are in a pebbles-enabled repository.");
-        
+
         if let Ok(root) = crate::config::find_pebbles_root() {
             let workspaces: Vec<String> = std::fs::read_dir(&root)
                 .ok()
@@ -33,7 +32,7 @@ fn print_not_in_workspace() {
                 .filter(|name| name.starts_with("ws-"))
                 .map(|name| name[3..].to_string())
                 .collect();
-            
+
             if !workspaces.is_empty() {
                 eprintln!("\nAvailable workspaces:");
                 for ws in workspaces {
