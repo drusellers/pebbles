@@ -5,8 +5,8 @@ Generate a commit message for the current changes following the OpenCommits stan
 ## Instructions
 
 1. Run the appropriate VCS command to see changes:
-    - Git: `git diff --staged` or `git diff HEAD~1`
-    - Jujutsu: `jj show --git`
+   - Git: `git diff --staged` or `git diff HEAD~1`
+   - Jujutsu: `jj show --git`
 
 2. Run `pebbles show $PEBBLES_CHANGE` for context about the change.
 

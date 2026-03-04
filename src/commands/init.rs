@@ -36,6 +36,11 @@ pub async fn init() -> Result<()> {
         .await
         .context("Failed to write OpenCode command templates")?;
 
+    // Create .opencode/agents directory with agent templates
+    template::write_opencode_agents(&repo_root)
+        .await
+        .context("Failed to write OpenCode agent templates")?;
+
     print_success(&format!("Initialized pebbles in {}", pebbles_dir.display()));
 
     Ok(())

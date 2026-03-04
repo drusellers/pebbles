@@ -47,28 +47,28 @@ Pebbles is a Rust CLI application that manages work items (changes) through thei
 
 Each command is a separate module:
 
-| File | Command | Purpose |
-|------|---------|---------|
-| `init.rs` | `init` | Initialize `.pebbles/` directory |
-| `new.rs` | `new` | Create a new change |
-| `list.rs` | `list` | List changes with filtering/sorting |
-| `show.rs` | `show` | Display change details |
-| `update.rs` | `update` | Modify change properties |
-| `approve.rs` | `approve` | Mark change as approved |
-| `start.rs` | `start` | Start working on a change (alias: `work`) |
-| `done.rs` | `done` | Mark change complete |
-| `cleanup.rs` | `cleanup` | Remove workspace |
-| `log.rs` | `log` | Show event history |
-| `current.rs` | `current` | Show current workspace change |
-| `edit.rs` | `edit` | Open change in editor |
-| `delete.rs` | `delete` | Remove a change |
-| `block.rs` | `block` | Add a blocking dependency |
-| `unblock.rs` | `unblock` | Remove a blocking dependency |
-| `plan.rs` | `plan` | Break down a change into steps |
-| `intake.rs` | `intake` | Create changes from text file/STDIN |
-| `status.rs` | `status` | Show workspace status |
-| `doctor.rs` | `doctor` | Check dependencies |
-| `completions.rs` | `completions` | Generate shell completions |
+| File             | Command       | Purpose                                   |
+|------------------|---------------|-------------------------------------------|
+| `init.rs`        | `init`        | Initialize `.pebbles/` directory          |
+| `new.rs`         | `new`         | Create a new change                       |
+| `list.rs`        | `list`        | List changes with filtering/sorting       |
+| `show.rs`        | `show`        | Display change details                    |
+| `update.rs`      | `update`      | Modify change properties                  |
+| `approve.rs`     | `approve`     | Mark change as approved                   |
+| `start.rs`       | `start`       | Start working on a change (alias: `work`) |
+| `done.rs`        | `done`        | Mark change complete                      |
+| `cleanup.rs`     | `cleanup`     | Remove workspace                          |
+| `log.rs`         | `log`         | Show event history                        |
+| `current.rs`     | `current`     | Show current workspace change             |
+| `edit.rs`        | `edit`        | Open change in editor                     |
+| `delete.rs`      | `delete`      | Remove a change                           |
+| `block.rs`       | `block`       | Add a blocking dependency                 |
+| `unblock.rs`     | `unblock`     | Remove a blocking dependency              |
+| `plan.rs`        | `plan`        | Break down a change into steps            |
+| `intake.rs`      | `intake`      | Create changes from text file/STDIN       |
+| `status.rs`      | `status`      | Show workspace status                     |
+| `doctor.rs`      | `doctor`      | Check dependencies                        |
+| `completions.rs` | `completions` | Generate shell completions                |
 
 ### 3. Data Models (`src/models.rs`)
 
@@ -268,14 +268,14 @@ The `.opencode/commands/` directory provides AI guidance:
 
 ## Dependencies
 
-| Crate | Purpose |
-|-------|---------|
-| `tokio` | Async runtime |
-| `clap` | CLI argument parsing |
-| `serde` | JSON/TOML serialization |
-| `anyhow` | Error handling |
-| `chrono` | Timestamps |
-| `colored` | Terminal colors |
-| `dialoguer` | Interactive prompts |
-| `toml` | Config file parsing |
-| `uuid` | Unique event IDs |
+| Crate       | Purpose                 |
+|-------------|-------------------------|
+| `tokio`     | Async runtime           |
+| `clap`      | CLI argument parsing    |
+| `serde`     | JSON/TOML serialization |
+| `anyhow`    | Error handling          |
+| `chrono`    | Timestamps              |
+| `colored`   | Terminal colors         |
+| `dialoguer` | Interactive prompts     |
+| `toml`      | Config file parsing     |
+| `uuid`      | Unique event IDs        |

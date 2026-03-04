@@ -25,6 +25,14 @@ pub trait Harness: Send + Sync {
     /// Generate a commit message for a completed change
     /// Returns the formatted commit message as a string
     fn generate_commit_msg(&self, change_id: &Id) -> Result<String>;
+
+    /// Answer a list of !agent directives from a change document
+    /// Takes the context and list of directives, returns answers in the same order
+    fn answer_directives(
+        &self,
+        ctx: &HarnessContext,
+        directives: Vec<String>,
+    ) -> Result<Vec<String>>;
 }
 
 #[derive(Debug, Clone)]

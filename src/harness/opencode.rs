@@ -1,4 +1,4 @@
-use super::{Harness, HarnessContext, check_binary, run_harness_command};
+use super::{check_binary, run_harness_command, Harness, HarnessContext};
 use crate::id::Id;
 use anyhow::{Context, Result};
 use std::process::Command;
@@ -93,4 +93,83 @@ impl Harness for OpenCode {
 
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
     }
+
+    fn answer_directives(
+        &self,
+        ctx: &HarnessContext,
+        directives: Vec<String>,
+    ) -> Result<Vec<String>> {
+        let mut cmd = Command::new("opencode");
+        cmd.current_dir(&ctx.work_dir);
+
+        if let Some(ref id) = ctx.change_id {
+            cmd.env("PEBBLES_CHANGE", id.to_string());
+        }
+        cmd.env("PEBBLES_VCS", &ctx.vcs_name);
+
+        // Pass directives as numbered list
+        let directives_text = directives
+            .iter()
+            .enumerate()
+            .map(|(i, d)| format!("{}. {}", i + 1, d))
+            .collect::<Vec<_>>()
+            .join("\n");
+        cmd.env("PEBBLES_DIRECTIVES", directives_text);
+        cmd.env("PEBBLES_DIRECTIVE_COUNT", directives.len().to_string());
+
+        cmd.args(["run", "/answer"]);
+
+        let output = cmd.output().context("Failed to run opencode /answer")?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            anyhow::bail!("opencode /answer failed: {}", stderr);
+        }
+
+        let response = String::from_utf8_lossy(&output.stdout);
+        let answers = parse_numbered_list(&response, directives.len())?;
+
+        Ok(answers)
+    }
+}
+
+fn parse_numbered_list(text: &str, expected_count: usize) -> Result<Vec<String>> {
+    let mut answers: Vec<Option<String>> = vec![None; expected_count];
+
+    for line in text.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+
+        // Try to match "N. " or "N) " patterns
+        if let Some((num_part, rest)) = trimmed.split_once('.')
+            && let Ok(num) = num_part.trim().parse::<usize>()
+            && num > 0 && num <= expected_count
+        {
+            answers[num - 1] = Some(rest.trim().to_string());
+        } else if let Some((num_part, rest)) = trimmed.split_once(')')
+            && let Ok(num) = num_part.trim().parse::<usize>()
+            && num > 0 && num <= expected_count
+        {
+            answers[num - 1] = Some(rest.trim().to_string());
+        }
+    }
+
+    // Verify all answers were found
+    let mut result = Vec::with_capacity(expected_count);
+    for (i, answer) in answers.iter().enumerate() {
+        match answer {
+            Some(a) => result.push(a.clone()),
+            None => {
+                anyhow::bail!(
+                    "LLM response missing answer for directive {}. Expected {} answers.",
+                    i + 1,
+                    expected_count
+                );
+            }
+        }
+    }
+
+    Ok(result)
 }

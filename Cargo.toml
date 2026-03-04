@@ -12,11 +12,8 @@ anyhow = "1.0"
 # CLI
 clap = { version = "4", features = ["derive"] }
 clap_complete = "4"
-colored = "2"
-dialoguer = "0.11"
-
-# Database
-deeb = "0.0"
+colored = "3"
+dialoguer = "0.12"
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
@@ -33,8 +30,6 @@ rand = "0.8"
 toml = "0.8"
 
 # Other
-uuid = { version = "1.0", features = ["v4"] }
-dirs = "5.0"
 tempfile = "3"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
