@@ -1,6 +1,6 @@
 use crate::id::Id;
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Deserializer, Serialize, de::Visitor};
+use serde::{de::Visitor, Deserialize, Deserializer, Serialize};
 use std::fmt;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -12,11 +12,16 @@ pub struct Change {
     pub priority: Priority,
     pub changelog_type: Option<ChangelogType>,
     pub parent: Option<Id>,
-    pub children: Vec<Id>,
-    pub dependencies: Vec<Id>,
+    /// Task IDs that block this change (who I depend on)
+    pub blocked_by: Vec<Id>,
     pub tags: Vec<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    // Timer tracking fields
+    #[serde(default)]
+    pub timer_start: Option<DateTime<Utc>>,
+    #[serde(default)]
+    pub accumulated_duration_secs: i64,
 }
 
 impl Change {
@@ -30,11 +35,12 @@ impl Change {
             priority,
             changelog_type: None,
             parent: None,
-            children: Vec::new(),
-            dependencies: Vec::new(),
+            blocked_by: Vec::new(),
             tags: Vec::new(),
             created_at: now,
             updated_at: now,
+            timer_start: None,
+            accumulated_duration_secs: 0,
         }
     }
 
@@ -81,26 +87,34 @@ impl Change {
         self.updated_at = Utc::now();
     }
 
-    #[allow(dead_code)]
-    pub fn add_child(&mut self, child_id: Id) {
-        if !self.children.contains(&child_id) {
-            self.children.push(child_id);
+    /// Add a blocker (task that blocks this change)
+    pub fn add_blocker(&mut self, blocker_id: Id) {
+        if !self.blocked_by.contains(&blocker_id) {
+            self.blocked_by.push(blocker_id);
         }
         self.updated_at = Utc::now();
     }
 
-    #[allow(dead_code)]
-    pub fn add_dependency(&mut self, dep_id: Id) {
-        if !self.dependencies.contains(&dep_id) {
-            self.dependencies.push(dep_id);
-        }
+    /// Remove a specific blocker
+    pub fn remove_blocker(&mut self, blocker_id: &Id) {
+        self.blocked_by.retain(|id| id != blocker_id);
         self.updated_at = Utc::now();
     }
 
-    #[allow(dead_code)]
-    pub fn remove_dependency(&mut self, dep_id: &Id) {
-        self.dependencies.retain(|id| id != dep_id);
+    /// Remove all blockers
+    pub fn clear_blockers(&mut self) {
+        self.blocked_by.clear();
         self.updated_at = Utc::now();
+    }
+
+    /// Check if this change is blocked by a specific change
+    pub fn is_blocked_by(&self, blocker_id: &Id) -> bool {
+        self.blocked_by.contains(blocker_id)
+    }
+
+    /// Check if this change has any blockers
+    pub fn has_blockers(&self) -> bool {
+        !self.blocked_by.is_empty()
     }
 
     /// Check if all acceptance criteria are completed
@@ -130,6 +144,61 @@ impl Change {
         }
 
         true
+    }
+
+    /// Check if the timer is currently running
+    pub fn is_timer_running(&self) -> bool {
+        self.timer_start.is_some()
+    }
+
+    /// Get the total accumulated duration plus any active timer time
+    pub fn total_duration_secs(&self) -> i64 {
+        let accumulated = self.accumulated_duration_secs;
+        if let Some(start) = self.timer_start {
+            let active_duration = Utc::now().signed_duration_since(start).num_seconds();
+            accumulated + active_duration
+        } else {
+            accumulated
+        }
+    }
+
+    /// Start the timer if not already running
+    pub fn timer_start(&mut self) -> bool {
+        if self.timer_start.is_none() {
+            self.timer_start = Some(Utc::now());
+            self.updated_at = Utc::now();
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Stop the timer if running and add to accumulated duration
+    pub fn timer_stop(&mut self) -> Option<i64> {
+        if let Some(start) = self.timer_start.take() {
+            let duration = Utc::now().signed_duration_since(start).num_seconds();
+            self.accumulated_duration_secs += duration;
+            self.updated_at = Utc::now();
+            Some(duration)
+        } else {
+            None
+        }
+    }
+
+    /// Format duration as human-readable string (e.g., "2h 15m" or "45m 30s")
+    pub fn format_duration(&self) -> String {
+        let total_secs = self.total_duration_secs();
+        let hours = total_secs / 3600;
+        let minutes = (total_secs % 3600) / 60;
+        let seconds = total_secs % 60;
+
+        if hours > 0 {
+            format!("{}h {}m", hours, minutes)
+        } else if minutes > 0 {
+            format!("{}m {}s", minutes, seconds)
+        } else {
+            format!("{}s", seconds)
+        }
     }
 }
 
@@ -332,6 +401,8 @@ pub enum EventType {
     DependencyRemoved,
     ScratchpadAppended,
     ParentChanged,
+    TimerStarted,
+    TimerStopped,
 }
 
 impl fmt::Display for EventType {
@@ -346,6 +417,8 @@ impl fmt::Display for EventType {
             EventType::DependencyRemoved => "dependency_removed",
             EventType::ScratchpadAppended => "scratchpad_appended",
             EventType::ParentChanged => "parent_changed",
+            EventType::TimerStarted => "timer_started",
+            EventType::TimerStopped => "timer_stopped",
         };
         write!(f, "{}", s)
     }
@@ -373,6 +446,8 @@ impl EventType {
                 Some(EventType::ScratchpadAppended)
             }
             "parentchanged" | "parent_changed" | "parent-changed" => Some(EventType::ParentChanged),
+            "timerstarted" | "timer_started" | "timer-started" => Some(EventType::TimerStarted),
+            "timerstopped" | "timer_stopped" | "timer-stopped" => Some(EventType::TimerStopped),
             _ => None,
         }
     }

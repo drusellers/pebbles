@@ -123,24 +123,6 @@ fn render_tree_view(
             row[5] = format!("{}{}", tree_prefix, title);
         }
 
-        // For parents, show completion count in status
-        if !node.change.children.is_empty() {
-            let done_count = node
-                .change
-                .children
-                .iter()
-                .filter(|child_id| {
-                    // Look up the child to get its status
-                    change_map
-                        .get(*child_id)
-                        .map(|c| c.status == Status::Done)
-                        .unwrap_or(false)
-                })
-                .count();
-            let total = node.change.children.len();
-            row[1] = format!("[{}/{}]", done_count, total);
-        }
-
         table.add_row(row);
     }
 
@@ -252,11 +234,11 @@ fn add_node_recursive<'a>(
         is_last,
     });
 
-    // Find children
-    let children: Vec<&'a Change> = change
-        .children
-        .iter()
-        .filter_map(|child_id| change_map.get(child_id).copied())
+    // Find children dynamically (changes that have this change as their parent)
+    let children: Vec<&'a Change> = change_map
+        .values()
+        .filter(|c| c.parent.as_ref() == Some(&change.id))
+        .copied()
         .collect();
 
     // Sort children
@@ -467,11 +449,12 @@ mod tests {
             priority: crate::models::Priority::Medium,
             changelog_type: None,
             parent: parent.map(|p| Id::new(p).expect("Invalid test parent ID")),
-            children: Vec::new(),
-            dependencies: Vec::new(),
+            blocked_by: Vec::new(),
             tags: Vec::new(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            timer_start: None,
+            accumulated_duration_secs: 0,
         }
     }
 

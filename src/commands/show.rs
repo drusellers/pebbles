@@ -75,23 +75,29 @@ pub async fn show(id: Option<IDish>) -> Result<()> {
         println!("  {}", parent.as_str().cyan());
     }
 
-    if !change.children.is_empty() {
-        println!("\n{}", "Children:".bold());
-        for child in &change.children {
-            println!("  {}", child.as_str().cyan());
-        }
-    }
-
-    if !change.dependencies.is_empty() {
-        println!("\n{}", "Dependencies:".bold());
-        for dep in &change.dependencies {
-            println!("  {}", dep.as_str().cyan());
+    if !change.blocked_by.is_empty() {
+        println!("\n{}", "Blocked by:".bold());
+        for blocker in &change.blocked_by {
+            println!("  {}", blocker.as_str().cyan());
         }
     }
 
     if !change.tags.is_empty() {
         println!("\n{}", "Tags:".bold());
         println!("  {}", change.tags.join(", "));
+    }
+
+    // Print timer info
+    if change.accumulated_duration_secs > 0 || change.is_timer_running() {
+        println!("\n{}", "Time:".bold());
+        if change.is_timer_running() {
+            println!(
+                "  {} (running)",
+                format_duration(change.total_duration_secs()).green().bold()
+            );
+        } else {
+            println!("  {}", format_duration(change.accumulated_duration_secs).cyan());
+        }
     }
 
     // Print dates
@@ -146,5 +152,19 @@ fn format_changelog(changelog: &str) -> String {
         "security" => "security".red().bold().to_string(),
         "internal" => "internal".dimmed().to_string(),
         _ => changelog.to_string(),
+    }
+}
+
+fn format_duration(total_secs: i64) -> String {
+    let hours = total_secs / 3600;
+    let minutes = (total_secs % 3600) / 60;
+    let seconds = total_secs % 60;
+
+    if hours > 0 {
+        format!("{}h {}m", hours, minutes)
+    } else if minutes > 0 {
+        format!("{}m {}s", minutes, seconds)
+    } else {
+        format!("{}s", seconds)
     }
 }

@@ -4,11 +4,12 @@ status: draft
 priority: medium
 changelog_type: null
 parent: null
-children: []
-dependencies: []
+blocked_by: []
 tags: []
 created_at: 2026-02-22T20:41:49.794897Z
 updated_at: 2026-02-22T20:41:49.794897Z
+timer_start: null
+accumulated_duration_secs: 0
 ---
 
 # Address !agent comments
@@ -49,6 +50,7 @@ To be determined during implementation (feature/fix/change/deprecated/removed/se
 
 ## Events
 
-### 2026-02-22T20:42:41.972496+00:00 [24xo] created
-{"parent":null,"priority":"medium","title":"Address !agent comments"}
+1. 2026-02-22T20:42:41.972496+00:00 [24xo] created
+   {"parent":null,"priority":"medium","title":"Address !agent comments"}
+
 

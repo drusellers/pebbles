@@ -186,13 +186,6 @@ async fn update_parent(
             return Ok(false); // No change needed
         }
 
-        let old_parent_id = old_parent.clone().unwrap();
-
-        // Remove from old parent's children list
-        if let Some(old_parent_change) = repo.find_by_id_mut(&old_parent_id) {
-            old_parent_change.children.retain(|id| id != full_id);
-        }
-
         // Set parent to None
         if let Some(change) = repo.find_by_id_mut(full_id) {
             change.parent = None;
@@ -234,23 +227,9 @@ async fn update_parent(
             return Ok(false); // No change needed
         }
 
-        // Remove from old parent if exists
-        if let Some(old_parent_id) = &old_parent
-            && let Some(old_parent_change) = repo.find_by_id_mut(old_parent_id)
-        {
-            old_parent_change.children.retain(|id| id != full_id);
-        }
-
         // Set new parent
         if let Some(change) = repo.find_by_id_mut(full_id) {
             change.parent = Some(new_parent_id.clone());
-        }
-
-        // Add to new parent's children list
-        if let Some(new_parent) = repo.find_by_id_mut(&new_parent_id)
-            && !new_parent.children.contains(full_id)
-        {
-            new_parent.children.push(full_id.clone());
         }
 
         events.push(Event::new(

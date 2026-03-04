@@ -64,5 +64,11 @@ async fn main() -> Result<()> {
         } => commands::unblock(change_id, dependency_id).await,
         Commands::Plan { id, wait } => commands::plan(id, wait).await,
         Commands::Intake { file } => commands::intake(file).await,
+        Commands::Timer { command } => match command {
+            cli::TimerCommands::Start { id } => commands::timer_start(id).await,
+            cli::TimerCommands::Stop { id } => commands::timer_stop(id).await,
+            cli::TimerCommands::Status { id } => commands::timer_status(id).await,
+        },
+        Commands::Ready => commands::ready().await,
     }
 }

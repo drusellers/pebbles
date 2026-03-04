@@ -2,7 +2,7 @@ use crate::commands::{print_info, print_success};
 use crate::config::{Config, get_config_path};
 use crate::harness::{HarnessContext, detect_harness_with_preference};
 use crate::idish::IDish;
-use crate::models::Status;
+use crate::models::{EventType, Status};
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
 use anyhow::{Context, Result};
@@ -64,6 +64,25 @@ pub async fn start(
     if change.status != Status::InProgress {
         repo.update_status(&full_id, Status::InProgress).await?;
         print_info("Updated status to InProgress");
+    }
+
+    // Auto-start timer if not already running
+    let change = repo
+        .find_by_id(&full_id)
+        .ok_or_else(|| anyhow::anyhow!("Change '{}' not found", full_id))?;
+    if !change.is_timer_running() {
+        if let Some(change_mut) = repo.find_by_id_mut(&full_id) {
+            if change_mut.timer_start() {
+                let event = crate::models::Event::new(
+                    full_id.clone(),
+                    EventType::TimerStarted,
+                    serde_json::json!({"auto": true}),
+                );
+                repo.db.add_event(event);
+                repo.save().await?;
+                print_info("Timer started");
+            }
+        }
     }
 
     if !wait {

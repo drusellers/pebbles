@@ -87,6 +87,86 @@ impl ChangeRepository {
         Ok(self.db.get_change(id).unwrap())
     }
 
+    /// Mark a change as done and auto-unblock any changes that were blocked by it.
+    /// Returns the list of newly unblocked change IDs.
+    pub async fn mark_done_and_unblock(&mut self, id: &Id) -> Result<Vec<Id>> {
+        // First mark the change as done
+        self.update_status(id, Status::Done).await?;
+
+        // Find all changes blocked by this one
+        let blocked_change_ids: Vec<Id> = self
+            .db
+            .data
+            .changes
+            .values()
+            .filter(|c| c.is_blocked_by(id))
+            .map(|c| c.id.clone())
+            .collect();
+
+        let mut unblocked = Vec::new();
+
+        for blocked_id in blocked_change_ids {
+            // Check if all blockers are now done
+            let should_unblock = if let Some(blocked_change) = self.db.get_change(&blocked_id) {
+                blocked_change
+                    .blocked_by
+                    .iter()
+                    .all(|blocker_id| {
+                        self.db
+                            .get_change(blocker_id)
+                            .map(|c| c.status == Status::Done)
+                            .unwrap_or(true) // If blocker doesn't exist, treat as done
+                    })
+            } else {
+                false
+            };
+
+            if should_unblock {
+                // Unblock the change (change status from Blocked to Draft)
+                if let Some(change_mut) = self.db.get_change_mut(&blocked_id) {
+                    if change_mut.status == Status::Blocked {
+                        change_mut.update_status(Status::Draft);
+
+                        // Add event
+                        let event = Event::new(
+                            blocked_id.clone(),
+                            EventType::StatusChanged,
+                            serde_json::json!({
+                                "from": "blocked",
+                                "to": "draft",
+                                "reason": "auto_unblocked",
+                                "blocker_done": id.to_string(),
+                            }),
+                        );
+                        self.db.add_event(event);
+
+                        unblocked.push(blocked_id);
+                    }
+                }
+            }
+        }
+
+        if !unblocked.is_empty() {
+            self.db.save().await?;
+        }
+
+        Ok(unblocked)
+    }
+
+    /// List changes that are ready to work (not done, not blocked)
+    pub fn list_ready(&self) -> Vec<&Change> {
+        self.db
+            .data
+            .changes
+            .values()
+            .filter(|c| {
+                c.status != Status::Done
+                    && !c.has_blockers()
+                    && c.status != Status::Blocked
+            })
+            .collect()
+    }
+
     pub fn list(
         &self,
         status: Option<&str>,

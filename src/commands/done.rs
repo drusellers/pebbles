@@ -15,7 +15,7 @@
 use crate::commands::{print_info, print_success, resolve_id};
 use crate::harness::detect_harness;
 use crate::idish::IDish;
-use crate::models::Status;
+use crate::models::{EventType, Status};
 use crate::repository::ChangeRepository;
 use crate::vcs::detect_vcs_with_preference;
 use anyhow::{Context, Result, anyhow};
@@ -71,10 +71,52 @@ pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
         None
     };
 
-    // Update status in the database - this always succeeds regardless of VCS/worktree
-    repo.update_status(&full_id, Status::Done).await?;
+    // Auto-stop timer if running
+    let timer_was_running = change.is_timer_running();
+    let session_duration = if timer_was_running {
+        if let Some(change_mut) = repo.find_by_id_mut(&full_id) {
+            change_mut.timer_stop()
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    if let Some(secs) = session_duration {
+        let event = crate::models::Event::new(
+            full_id.clone(),
+            EventType::TimerStopped,
+            serde_json::json!({"auto": true, "duration_secs": secs}),
+        );
+        repo.db.add_event(event);
+        print_info(&format!("Timer stopped (session: {})", format_duration(secs)));
+    }
+
+    // Mark as done and auto-unblock changes that were blocked by this one
+    let unblocked = repo.mark_done_and_unblock(&full_id).await?;
 
     print_success(&format!("Marked change {} as done", full_id));
+
+    // Show total time if any was recorded
+    let change = repo
+        .find_by_id(&full_id)
+        .ok_or_else(|| anyhow!("Change '{}' not found", full_id))?;
+    if change.accumulated_duration_secs > 0 {
+        print_info(&format!(
+            "Total time: {}",
+            format_duration(change.accumulated_duration_secs)
+        ));
+    }
+
+    // Show unblocked changes
+    if !unblocked.is_empty() {
+        print_info(&format!(
+            "Unblocked {} change(s): {}",
+            unblocked.len(),
+            unblocked.iter().map(|id| id.to_string()).collect::<Vec<_>>().join(", ")
+        ));
+    }
 
     // For --auto mode: generate commit message and commit via VCS
     if let Some((harness, vcs)) = auto_commit {
@@ -86,4 +128,18 @@ pub async fn done(id: Option<IDish>, auto: bool, force: bool) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn format_duration(total_secs: i64) -> String {
+    let hours = total_secs / 3600;
+    let minutes = (total_secs % 3600) / 60;
+    let seconds = total_secs % 60;
+
+    if hours > 0 {
+        format!("{}h {}m", hours, minutes)
+    } else if minutes > 0 {
+        format!("{}m {}s", minutes, seconds)
+    } else {
+        format!("{}s", seconds)
+    }
 }

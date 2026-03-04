@@ -4,11 +4,12 @@ status: draft
 priority: medium
 changelog_type: null
 parent: null
-children: []
-dependencies: []
+blocked_by: []
 tags: []
 created_at: 2026-02-22T20:46:34.043423Z
 updated_at: 2026-02-22T20:46:34.043423Z
+timer_start: null
+accumulated_duration_secs: 0
 ---
 
 # Provide Answers Workflow
@@ -60,6 +61,7 @@ To be determined during implementation (feature/fix/change/deprecated/removed/se
 
 ## Events
 
-### 2026-02-22T20:48:36.273906+00:00 [rw1w] created
-{"parent":null,"priority":"medium","title":"Provide Answers Workflow"}
+1. 2026-02-22T20:48:36.273906+00:00 [rw1w] created
+   {"parent":null,"priority":"medium","title":"Provide Answers Workflow"}
+
 

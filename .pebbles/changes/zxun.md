@@ -4,11 +4,12 @@ status: draft
 priority: medium
 changelog_type: null
 parent: null
-children: []
-dependencies: []
+blocked_by: []
 tags: []
 created_at: 2026-02-19T18:51:24.791182Z
 updated_at: 2026-02-19T18:51:24.791182Z
+timer_start: null
+accumulated_duration_secs: 0
 ---
 
 # Implement Releases feature for Pebbles
@@ -63,6 +64,7 @@ Add Releases feature to Pebbles for organizing changes into versioned milestones
 
 ## Events
 
-### 2026-02-19T18:51:24.791217+00:00 [f6wp] created
-{"parent":null,"priority":"medium","title":"Implement Releases feature for Pebbles"}
+1. 2026-02-19T18:51:24.791217+00:00 [f6wp] created
+   {"parent":null,"priority":"medium","title":"Implement Releases feature for Pebbles"}
+
 

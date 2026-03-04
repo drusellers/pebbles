@@ -160,6 +160,35 @@ pub enum Commands {
         /// Path to file containing the text (reads from STDIN if not provided)
         file: Option<std::path::PathBuf>,
     },
+
+    /// Manage time tracking for changes
+    #[command(next_help_heading = "Tasks", visible_alias = "t")]
+    Timer {
+        #[command(subcommand)]
+        command: TimerCommands,
+    },
+
+    /// List changes ready to work on (not blocked, not done)
+    Ready,
+}
+
+#[derive(Subcommand)]
+pub enum TimerCommands {
+    /// Start the timer for a change
+    Start {
+        /// Change ID (or current change if not specified)
+        id: Option<IDish>,
+    },
+    /// Stop the timer for a change
+    Stop {
+        /// Change ID (or current change if not specified)
+        id: Option<IDish>,
+    },
+    /// Show timer status for a change
+    Status {
+        /// Change ID (or current change if not specified)
+        id: Option<IDish>,
+    },
 }
 
 #[derive(Parser)]

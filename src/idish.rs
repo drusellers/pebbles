@@ -97,11 +97,12 @@ mod tests {
                 priority: Priority::Medium,
                 changelog_type: None,
                 parent: None,
-                children: Vec::new(),
-                dependencies: Vec::new(),
+                blocked_by: Vec::new(),
                 tags: Vec::new(),
                 created_at: now,
                 updated_at: now,
+                timer_start: None,
+                accumulated_duration_secs: 0,
             };
             db.changes.insert(change.id.clone(), change);
         }

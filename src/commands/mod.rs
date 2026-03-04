@@ -19,9 +19,11 @@ pub mod log;
 pub mod migrate;
 pub mod new;
 pub mod plan;
+pub mod ready;
 pub mod show;
 pub mod start;
 pub mod status;
+pub mod timer;
 pub mod update;
 
 pub use approve::approve;
@@ -40,9 +42,11 @@ pub use log::log;
 pub use migrate::migrate;
 pub use new::new;
 pub use plan::plan;
+pub use ready::ready;
 pub use show::show;
 pub use start::start;
 pub use status::status;
+pub use timer::{timer_start, timer_stop, timer_status};
 pub use update::update;
 
 /// Resolve change ID from either explicit argument or current workspace.

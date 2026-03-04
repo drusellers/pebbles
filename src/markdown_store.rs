@@ -44,16 +44,19 @@ impl std::error::Error for MarkdownParseError {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Frontmatter {
-    id: Option<String>,
-    status: Option<String>,
-    priority: Option<String>,
+    id: Option<Id>,
+    status: Option<Status>,
+    priority: Option<Priority>,
     changelog_type: Option<String>,
-    parent: Option<String>,
-    children: Option<Vec<String>>,
-    dependencies: Option<Vec<String>>,
+    parent: Option<Id>,
+    /// Changes that block this change (who I depend on)
+    blocked_by: Option<Vec<Id>>,
     tags: Option<Vec<String>>,
     created_at: Option<DateTime<Utc>>,
     updated_at: Option<DateTime<Utc>>,
+    // Timer fields
+    timer_start: Option<DateTime<Utc>>,
+    accumulated_duration_secs: Option<i64>,
 }
 
 #[derive(Debug)]
@@ -87,32 +90,30 @@ pub fn parse_change_file(id: &Id, content: &str) -> ParseResult<ParsedChangeFile
     let parsed_body = parse_body(id, &body)?;
 
     let mut frontmatter = fm.unwrap_or(Frontmatter {
-        id: Some(id.to_string()),
-        status: Some("draft".to_string()),
-        priority: Some("medium".to_string()),
+        id: Some(id.clone()),
+        status: Some(Status::Draft),
+        priority: Some(Priority::Medium),
         changelog_type: None,
         parent: None,
-        children: Some(Vec::new()),
-        dependencies: Some(Vec::new()),
+        blocked_by: Some(Vec::new()),
         tags: Some(Vec::new()),
         created_at: Some(now),
         updated_at: Some(now),
+        timer_start: None,
+        accumulated_duration_secs: Some(0),
     });
 
     if frontmatter.id.is_none() {
-        frontmatter.id = Some(id.to_string());
+        frontmatter.id = Some(id.clone());
     }
     if frontmatter.status.is_none() {
-        frontmatter.status = Some("draft".to_string());
+        frontmatter.status = Some(Status::Draft);
     }
     if frontmatter.priority.is_none() {
-        frontmatter.priority = Some("medium".to_string());
+        frontmatter.priority = Some(Priority::Medium);
     }
-    if frontmatter.children.is_none() {
-        frontmatter.children = Some(Vec::new());
-    }
-    if frontmatter.dependencies.is_none() {
-        frontmatter.dependencies = Some(Vec::new());
+    if frontmatter.blocked_by.is_none() {
+        frontmatter.blocked_by = Some(Vec::new());
     }
     if frontmatter.tags.is_none() {
         frontmatter.tags = Some(Vec::new());
@@ -123,25 +124,20 @@ pub fn parse_change_file(id: &Id, content: &str) -> ParseResult<ParsedChangeFile
     if frontmatter.updated_at.is_none() {
         frontmatter.updated_at = Some(now);
     }
+    if frontmatter.accumulated_duration_secs.is_none() {
+        frontmatter.accumulated_duration_secs = Some(0);
+    }
 
-    let status = Status::from_string(frontmatter.status.as_deref().unwrap_or("draft"))
-        .unwrap_or(Status::Draft);
-    let priority = Priority::from_string(frontmatter.priority.as_deref().unwrap_or("medium"))
-        .unwrap_or(Priority::Medium);
+    let status = frontmatter.status.unwrap_or(Status::Draft);
+    let priority = frontmatter.priority.unwrap_or(Priority::Medium);
     let changelog_type = frontmatter
         .changelog_type
         .as_deref()
         .and_then(ChangelogType::from_string);
 
-    let parent = frontmatter
-        .parent
-        .as_deref()
-        .map(Id::new)
-        .transpose()
-        .map_err(|_| MarkdownParseError::InvalidParentId(frontmatter.parent.unwrap_or_default()))?;
+    let parent = frontmatter.parent;
 
-    let children = parse_ids(frontmatter.children.unwrap_or_default(), "children")?;
-    let dependencies = parse_ids(frontmatter.dependencies.unwrap_or_default(), "dependencies")?;
+    let blocked_by = frontmatter.blocked_by.unwrap_or_default();
 
     let change = Change {
         id: id.clone(),
@@ -151,11 +147,12 @@ pub fn parse_change_file(id: &Id, content: &str) -> ParseResult<ParsedChangeFile
         priority,
         changelog_type,
         parent,
-        children,
-        dependencies,
+        blocked_by,
         tags: frontmatter.tags.unwrap_or_default(),
         created_at: frontmatter.created_at.unwrap_or(now),
         updated_at: frontmatter.updated_at.unwrap_or(now),
+        timer_start: frontmatter.timer_start,
+        accumulated_duration_secs: frontmatter.accumulated_duration_secs.unwrap_or(0),
     };
 
     let normalized_content =
@@ -174,22 +171,17 @@ pub fn parse_change_file(id: &Id, content: &str) -> ParseResult<ParsedChangeFile
 
 pub fn write_change_file(change: &Change, events: &[Event]) -> String {
     let frontmatter = Frontmatter {
-        id: Some(change.id.to_string()),
-        status: Some(change.status.to_string()),
-        priority: Some(change.priority.to_string()),
+        id: Some(change.id.clone()),
+        status: Some(change.status.clone()),
+        priority: Some(change.priority.clone()),
         changelog_type: change.changelog_type.as_ref().map(ToString::to_string),
-        parent: change.parent.as_ref().map(ToString::to_string),
-        children: Some(change.children.iter().map(ToString::to_string).collect()),
-        dependencies: Some(
-            change
-                .dependencies
-                .iter()
-                .map(ToString::to_string)
-                .collect(),
-        ),
+        parent: change.parent.clone(),
+        blocked_by: Some(change.blocked_by.clone()),
         tags: Some(change.tags.clone()),
         created_at: Some(change.created_at),
         updated_at: Some(change.updated_at),
+        timer_start: change.timer_start,
+        accumulated_duration_secs: Some(change.accumulated_duration_secs),
     };
 
     let mut out = String::new();
@@ -449,7 +441,7 @@ mod tests {
 id: def2
 status: in_progress
 priority: high
-dependencies: [abc1]
+blocked_by: [abc1]
 tags: [backend]
 created_at: 2026-03-03T10:00:00Z
 updated_at: 2026-03-03T11:00:00Z
@@ -470,8 +462,8 @@ Need to build and wire endpoint.
         assert_eq!(parsed.change.status, Status::InProgress);
         assert_eq!(parsed.change.priority, Priority::High);
         assert_eq!(parsed.change.title, "Implement API endpoint");
-        assert_eq!(parsed.change.dependencies.len(), 1);
-        assert_eq!(parsed.change.dependencies[0].as_str(), "abc1");
+        assert_eq!(parsed.change.blocked_by.len(), 1);
+        assert_eq!(parsed.change.blocked_by[0].as_str(), "abc1");
         assert_eq!(parsed.events.len(), 1);
         assert_eq!(parsed.events[0].event_type.to_string(), "updated");
         assert_eq!(
@@ -495,7 +487,7 @@ Need to build and wire endpoint.
 id: def2
 status: in_progress
 priority: high
-dependencies: [abc1]
+blocked_by: [abc1]
 tags: [backend]
 created_at: 2026-03-03T10:00:00Z
 updated_at: 2026-03-03T11:00:00Z
@@ -532,11 +524,12 @@ Need to build and wire endpoint.
             priority: Priority::Low,
             changelog_type: Some(ChangelogType::Change),
             parent: None,
-            children: Vec::new(),
-            dependencies: vec![Id::new("abc1").expect("valid id")],
+            blocked_by: vec![Id::new("abc1").expect("valid id")],
             tags: vec!["docs".to_string()],
             created_at: now,
             updated_at: now,
+            timer_start: None,
+            accumulated_duration_secs: 0,
         };
 
         let events = vec![Event {

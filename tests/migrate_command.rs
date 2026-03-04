@@ -18,8 +18,7 @@ fn migrate_converts_db_json_and_removes_legacy_file() {
       "priority": "medium",
       "changelog_type": null,
       "parent": null,
-      "children": [],
-      "dependencies": [],
+      "blocked_by": [],
       "tags": ["legacy"],
       "created_at": "2026-03-03T10:00:00Z",
       "updated_at": "2026-03-03T10:00:00Z"
